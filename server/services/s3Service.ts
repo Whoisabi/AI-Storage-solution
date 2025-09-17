@@ -47,15 +47,18 @@ export interface S3ListResult {
 export class S3Service {
   
   // Create S3 client with per-user credentials or fallback to default
-  private createS3Client(credentials?: S3Credentials): S3Client {
+  private createS3Client(credentials?: S3Credentials, region?: string): S3Client {
     if (credentials) {
       return new S3Client({
-        region: credentials.region || "us-east-1",
+        region: region || "us-east-1", // Use provided region or default
         credentials: {
           accessKeyId: credentials.accessKeyId,
           secretAccessKey: credentials.secretAccessKey,
           ...(credentials.sessionToken && { sessionToken: credentials.sessionToken })
         },
+        // Enable region-agnostic requests
+        forcePathStyle: false,
+        useGlobalEndpoint: false
       });
     }
     return s3Client; // fallback to default client
@@ -97,7 +100,7 @@ export class S3Service {
     continuationToken?: string,
     maxKeys: number = 1000
   ): Promise<S3ListResult> {
-    const client = this.createS3Client(credentials);
+    let client = this.createS3Client(credentials);
     const command = new ListObjectsV2Command({
       Bucket: bucketName,
       Prefix: prefix,
@@ -106,19 +109,48 @@ export class S3Service {
       ContinuationToken: continuationToken,
     });
     
-    const response = await client.send(command);
-    
-    return {
-      objects: response.Contents?.map(obj => ({
-        key: obj.Key || '',
-        lastModified: obj.LastModified,
-        size: obj.Size,
-        storageClass: obj.StorageClass
-      })) || [],
-      prefixes: response.CommonPrefixes?.map(prefix => prefix.Prefix || '') || [],
-      nextToken: response.NextContinuationToken,
-      isTruncated: response.IsTruncated || false
-    };
+    try {
+      const response = await client.send(command);
+      
+      return {
+        objects: response.Contents?.map(obj => ({
+          key: obj.Key || '',
+          lastModified: obj.LastModified,
+          size: obj.Size,
+          storageClass: obj.StorageClass
+        })) || [],
+        prefixes: response.CommonPrefixes?.map(prefix => prefix.Prefix || '') || [],
+        nextToken: response.NextContinuationToken,
+        isTruncated: response.IsTruncated || false
+      };
+    } catch (error: any) {
+      // Handle region redirect errors
+      if (error.Code === 'PermanentRedirect' && error.Endpoint) {
+        // Extract region from endpoint (e.g., bucket.s3-us-west-2.amazonaws.com)
+        const regionMatch = error.Endpoint.match(/s3-([a-z0-9-]+)\.amazonaws\.com/);
+        if (regionMatch && regionMatch[1]) {
+          const correctRegion = regionMatch[1];
+          console.log(`Retrying with correct region: ${correctRegion} for bucket: ${bucketName}`);
+          
+          // Create new client with correct region
+          client = this.createS3Client(credentials, correctRegion);
+          const retryResponse = await client.send(command);
+          
+          return {
+            objects: retryResponse.Contents?.map(obj => ({
+              key: obj.Key || '',
+              lastModified: obj.LastModified,
+              size: obj.Size,
+              storageClass: obj.StorageClass
+            })) || [],
+            prefixes: retryResponse.CommonPrefixes?.map(prefix => prefix.Prefix || '') || [],
+            nextToken: retryResponse.NextContinuationToken,
+            isTruncated: retryResponse.IsTruncated || false
+          };
+        }
+      }
+      throw error;
+    }
   }
   
   // Upload file to specific S3 bucket and path
