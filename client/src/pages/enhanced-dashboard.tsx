@@ -96,6 +96,11 @@ export default function EnhancedDashboard() {
 
   const isS3Connected = s3Status?.connected || false;
   const s3Buckets = s3BucketsData?.buckets || [];
+  
+  // Filter buckets based on search query
+  const filteredS3Buckets = s3Buckets.filter(bucket => 
+    searchQuery === '' || bucket.name.toLowerCase().includes(searchQuery.toLowerCase())
+  );
 
   const formatFileSize = (bytes: number) => {
     if (bytes === 0) return '0 Bytes';
@@ -351,8 +356,15 @@ export default function EnhancedDashboard() {
             {isS3Connected && currentLocation.type === 'root' && s3Buckets.length > 0 && (
               <div className="mb-6">
                 <h4 className="text-md font-medium text-gray-700 mb-3">Available Disks</h4>
-                <div className="space-y-3">
-                  {s3Buckets.map((bucket) => (
+                {filteredS3Buckets.length === 0 && searchQuery !== '' ? (
+                  <div className="text-center py-8">
+                    <Database className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                    <p className="text-gray-500">No disks found matching "{searchQuery}"</p>
+                    <p className="text-sm text-gray-400">Try a different search term</p>
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    {filteredS3Buckets.map((bucket) => (
                     <Card 
                       key={bucket.name}
                       className="cursor-pointer hover:shadow-md transition-shadow border-blue-200 bg-blue-50"
@@ -382,7 +394,8 @@ export default function EnhancedDashboard() {
                       </CardContent>
                     </Card>
                   ))}
-                </div>
+                  </div>
+                )}
               </div>
             )}
             
