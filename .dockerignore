@@ -1,18 +1,64 @@
+# Node modules
 node_modules
-npm-debug.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Build output
+dist
+build
+.vite
+
+# Development files
+.env
+.env.local
+.env.development
+.env.test
+
+# Git
 .git
 .gitignore
+
+# Documentation
 README.md
-.env
-.nyc_output
-coverage
-.idea
-.vscode
-.DS_Store
-*.log
-dist
-migrations
-.replit
+README-Docker.md
+*.md
 replit.md
-attached_assets
+
+# IDE files
+.vscode
+.idea
+*.swp
+*.swo
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Logs
+logs
+*.log
 tmp
+
+# Testing
+coverage
+.nyc_output
+
+# Temporary files
+temp
+.tmp
+
+# Cache directories
+.cache
+.parcel-cache
+
+# Replit specific
+.replit
+attached_assets
+
+# Migrations (generated at runtime)
+migrations
+
+# Misc
+.env.backup
+.eslintcache
