@@ -84,7 +84,9 @@ export default function FileTable() {
     objects: {key: string, lastModified?: string, size?: number}[],
     prefixes: string[]
   }>({
-    queryKey: ["/api/s3/objects", currentLocation.name, currentLocation.prefix],
+    queryKey: ["/api/s3/objects", 
+      currentLocation.type === 's3-bucket' ? currentLocation.name : currentLocation.bucketName, 
+      currentLocation.prefix || ""],
     queryFn: () => {
       const params = new URLSearchParams();
       if (currentLocation.type === 's3-bucket') {
@@ -242,7 +244,7 @@ export default function FileTable() {
     }
   };
 
-  if (isLoading || (isS3Connected && s3BucketsLoading) || (currentLocation.type === 's3-bucket' && s3ObjectsLoading)) {
+  if (isLoading || (isS3Connected && s3BucketsLoading) || ((currentLocation.type === 's3-bucket' || currentLocation.type === 's3-prefix') && s3ObjectsLoading)) {
     return (
       <div className="flex items-center justify-center py-8">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
