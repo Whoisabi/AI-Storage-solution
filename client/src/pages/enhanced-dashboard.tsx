@@ -351,7 +351,7 @@ export default function EnhancedDashboard() {
             {isS3Connected && currentLocation.type === 'root' && s3Buckets.length > 0 && (
               <div className="mb-6">
                 <h4 className="text-md font-medium text-gray-700 mb-3">Available Disks</h4>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                <div className="space-y-3">
                   {s3Buckets.map((bucket) => (
                     <Card 
                       key={bucket.name}
@@ -386,7 +386,10 @@ export default function EnhancedDashboard() {
               </div>
             )}
             
-            <FileTable searchQuery={searchQuery} />
+            {/* Only show FileTable when not displaying S3 buckets at root level */}
+            {!(isS3Connected && currentLocation.type === 'root' && s3Buckets.length > 0) && (
+              <FileTable searchQuery={searchQuery} />
+            )}
           </CardContent>
         </Card>
       </main>
