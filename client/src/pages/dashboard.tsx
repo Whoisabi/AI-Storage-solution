@@ -11,20 +11,19 @@ import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation } from "@tanstack/react-query";
+import { apiRequest, queryClient } from "@/lib/queryClient";
 import { Search, Plus, HardDrive, CheckCircle, FileText, Share, FolderPlus, Wifi, WifiOff } from "lucide-react";
 
 export default function Dashboard() {
   const { toast } = useToast();
   const { isAuthenticated, isLoading } = useAuth();
-  const [isS3Connected, setIsS3Connected] = useState(false);
   const [showConnectionModal, setShowConnectionModal] = useState(false);
   const [s3Credentials, setS3Credentials] = useState({
     accessKeyId: '',
     secretAccessKey: '',
     region: 'us-east-1'
   });
-  const [isConnecting, setIsConnecting] = useState(false);
 
   // Redirect to home if not authenticated
   useEffect(() => {
@@ -46,6 +45,14 @@ export default function Dashboard() {
     retry: false,
   });
 
+  // Query S3 connection status from server
+  const { data: s3Status, isLoading: s3StatusLoading } = useQuery({
+    queryKey: ["/api/s3/status"],
+    retry: false,
+  });
+
+  const isS3Connected = s3Status?.connected || false;
+
   const formatFileSize = (bytes: number) => {
     if (bytes === 0) return '0 Bytes';
     const k = 1024;
@@ -54,7 +61,44 @@ export default function Dashboard() {
     return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
   };
 
-  const handleS3Connect = async () => {
+  // S3 Connection mutation  
+  const connectMutation = useMutation({
+    mutationFn: async (credentials: typeof s3Credentials) => {
+      const response = await fetch('/api/s3/connect', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(credentials),
+        credentials: 'include',
+      });
+      
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Connection failed');
+      }
+      
+      return response.json();
+    },
+    onSuccess: () => {
+      // Invalidate connection status query to refetch
+      queryClient.invalidateQueries({ queryKey: ["/api/s3/status"] });
+      setShowConnectionModal(false);
+      setS3Credentials({ accessKeyId: '', secretAccessKey: '', region: 'us-east-1' });
+      toast({
+        title: "Connection Successful",
+        description: "S3 connection is active",
+        variant: "default",
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Connection Failed",
+        description: error.message || "Invalid credentials",
+        variant: "destructive",
+      });
+    }
+  });
+
+  const handleS3Connect = () => {
     if (!s3Credentials.accessKeyId || !s3Credentials.secretAccessKey) {
       toast({
         title: "Missing Credentials",
@@ -63,41 +107,7 @@ export default function Dashboard() {
       });
       return;
     }
-
-    setIsConnecting(true);
-    try {
-      const response = await fetch('/api/s3/connect', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(s3Credentials),
-        credentials: 'include',
-      });
-
-      if (response.ok) {
-        setIsS3Connected(true);
-        setShowConnectionModal(false);
-        toast({
-          title: "Connection Successful",
-          description: "S3 connection is active",
-          variant: "default",
-        });
-      } else {
-        const error = await response.json();
-        toast({
-          title: "Connection Failed",
-          description: error.message || "Invalid credentials",
-          variant: "destructive",
-        });
-      }
-    } catch (error) {
-      toast({
-        title: "Connection Error",
-        description: "Failed to connect to S3",
-        variant: "destructive",
-      });
-    } finally {
-      setIsConnecting(false);
-    }
+    connectMutation.mutate(s3Credentials);
   };
 
   if (isLoading) {
@@ -332,10 +342,10 @@ export default function Dashboard() {
             </Button>
             <Button 
               onClick={handleS3Connect}
-              disabled={isConnecting}
+              disabled={connectMutation.isPending}
               data-testid="button-connect"
             >
-              {isConnecting ? "Connecting..." : "Connect"}
+              {connectMutation.isPending ? "Connecting..." : "Connect"}
             </Button>
           </DialogFooter>
         </DialogContent>
