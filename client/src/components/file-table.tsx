@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
+import { useNavigation } from "@/hooks/useNavigation";
 import { isUnauthorizedError } from "@/lib/authUtils";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -50,6 +51,7 @@ export default function FileTable() {
   const [selectedFile, setSelectedFile] = useState<FileData | null>(null);
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const { navigateTo, currentLocation } = useNavigation();
 
   const { data: fileData, isLoading } = useQuery<{files: FileData[], folders: any[]}>({
     queryKey: ["/api/files"],
@@ -281,10 +283,14 @@ export default function FileTable() {
                       variant="ghost"
                       size="sm"
                       onClick={() => {
-                        // TODO: Navigate into bucket - implement in next task
-                        toast({
-                          title: "Bucket Navigation",
-                          description: `Navigate into ${bucket.name} - coming soon!`,
+                        const newPath = [...currentLocation.path, {
+                          type: 's3-bucket',
+                          name: bucket.name
+                        }];
+                        navigateTo({
+                          type: 's3-bucket',
+                          name: bucket.name,
+                          path: newPath
                         });
                       }}
                       data-testid={`button-open-bucket-${bucket.name}`}
@@ -298,11 +304,25 @@ export default function FileTable() {
             
             {/* Render folders */}
             {folders.map((folder) => (
-              <TableRow key={`folder-${folder.id}`} className="hover:bg-gray-50">
+              <TableRow key={`folder-${folder.id}`} className="hover:bg-gray-50 cursor-pointer">
                 <TableCell>
                   <Checkbox disabled />
                 </TableCell>
-                <TableCell>
+                <TableCell
+                  onClick={() => {
+                    const newPath = [...currentLocation.path, {
+                      type: 'folder',
+                      id: folder.id,
+                      name: folder.name
+                    }];
+                    navigateTo({
+                      type: 'folder',
+                      id: folder.id,
+                      name: folder.name,
+                      path: newPath
+                    });
+                  }}
+                >
                   <div className="flex items-center space-x-3">
                     <div className="w-8 h-8 bg-blue-100 rounded flex items-center justify-center">
                       <Folder className="h-5 w-5 text-blue-600" />
@@ -335,14 +355,41 @@ export default function FileTable() {
                     <Button
                       variant="ghost"
                       size="sm"
-                      onClick={() => handleShare(folder)}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        const newPath = [...currentLocation.path, {
+                          type: 'folder',
+                          id: folder.id,
+                          name: folder.name
+                        }];
+                        navigateTo({
+                          type: 'folder',
+                          id: folder.id,
+                          name: folder.name,
+                          path: newPath
+                        });
+                      }}
+                      data-testid={`button-open-folder-${folder.id}`}
+                    >
+                      <Folder className="h-4 w-4" />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleShare(folder);
+                      }}
                     >
                       <Share className="h-4 w-4" />
                     </Button>
                     <Button
                       variant="ghost"
                       size="sm"
-                      onClick={() => handleDelete(folder.id)}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleDelete(folder.id);
+                      }}
                       disabled={deleteMutation.isPending}
                       className="text-red-600 hover:text-red-700"
                     >

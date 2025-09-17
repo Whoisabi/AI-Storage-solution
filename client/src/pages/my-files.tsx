@@ -1,15 +1,18 @@
 import { useEffect } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
+import { useNavigation } from "@/hooks/useNavigation";
 import Sidebar from "@/components/sidebar";
 import FileUpload from "@/components/file-upload";
 import FileTable from "@/components/file-table";
+import Breadcrumb from "@/components/breadcrumb";
 import { Card, CardContent } from "@/components/ui/card";
 import { Folder, File } from "lucide-react";
 
 export default function MyFiles() {
   const { toast } = useToast();
   const { isAuthenticated, isLoading } = useAuth();
+  const { currentLocation } = useNavigation();
 
   // Redirect to home if not authenticated
   useEffect(() => {
@@ -42,10 +45,15 @@ export default function MyFiles() {
         {/* Header */}
         <div className="flex items-center justify-between mb-8">
           <div>
-            <h2 className="text-3xl font-bold text-gray-900">My Files</h2>
-            <p className="text-gray-600 mt-1">Browse and manage your uploaded files</p>
+            <h2 className="text-3xl font-bold text-gray-900">
+              {currentLocation.name || 'My Files'}
+            </h2>
+            <p className="text-gray-600 mt-1">Browse and manage your files</p>
           </div>
         </div>
+
+        {/* Breadcrumb Navigation */}
+        <Breadcrumb />
 
         {/* File Upload Zone */}
         <FileUpload />
@@ -54,7 +62,11 @@ export default function MyFiles() {
         <Card className="mt-8">
           <CardContent className="p-6">
             <div className="flex items-center justify-between mb-6">
-              <h3 className="text-lg font-semibold text-gray-900">All Files</h3>
+              <h3 className="text-lg font-semibold text-gray-900">
+                {currentLocation.type === 'root' ? 'All Files' : 
+                 currentLocation.type === 's3-bucket' ? 'Bucket Contents' : 
+                 'Folder Contents'}
+              </h3>
             </div>
             
             <FileTable />
