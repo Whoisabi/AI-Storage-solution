@@ -54,7 +54,15 @@ export default function FileTable() {
   const { navigateTo, currentLocation } = useNavigation();
 
   const { data: fileData, isLoading } = useQuery<{files: FileData[], folders: any[]}>({
-    queryKey: ["/api/files"],
+    queryKey: ["/api/files", currentLocation.type, currentLocation.id],
+    queryFn: () => {
+      const params = new URLSearchParams();
+      if (currentLocation.type === 'folder' && currentLocation.id) {
+        params.append('folderId', currentLocation.id.toString());
+      }
+      return fetch(`/api/files?${params}`, { credentials: 'include' }).then(res => res.json());
+    },
+    enabled: currentLocation.type !== 's3-bucket',
     retry: false,
   });
 
@@ -64,16 +72,33 @@ export default function FileTable() {
     retry: false,
   });
 
-  // Query S3 buckets when connected
+  // Query S3 buckets when connected and at root
   const { data: s3BucketsData, isLoading: s3BucketsLoading } = useQuery<{buckets: S3Bucket[]}>({
     queryKey: ["/api/s3/buckets"],
-    enabled: !!s3Status?.connected,
+    enabled: !!s3Status?.connected && currentLocation.type === 'root',
+    retry: false,
+  });
+
+  // Query S3 bucket contents when navigated into a bucket
+  const { data: s3ObjectsData, isLoading: s3ObjectsLoading } = useQuery<{
+    objects: {key: string, lastModified?: string, size?: number}[],
+    prefixes: string[]
+  }>({
+    queryKey: ["/api/s3/objects", currentLocation.name],
+    queryFn: () => {
+      const params = new URLSearchParams();
+      params.append('bucket', currentLocation.name!);
+      return fetch(`/api/s3/objects?${params}`, { credentials: 'include' }).then(res => res.json());
+    },
+    enabled: currentLocation.type === 's3-bucket' && !!currentLocation.name,
     retry: false,
   });
 
   const files = fileData?.files || [];
   const folders = fileData?.folders || [];
   const s3Buckets = s3BucketsData?.buckets || [];
+  const s3Objects = s3ObjectsData?.objects || [];
+  const s3Prefixes = s3ObjectsData?.prefixes || [];
   const isS3Connected = s3Status?.connected || false;
 
   const downloadMutation = useMutation({
@@ -211,7 +236,7 @@ export default function FileTable() {
     }
   };
 
-  if (isLoading || (isS3Connected && s3BucketsLoading)) {
+  if (isLoading || (isS3Connected && s3BucketsLoading) || (currentLocation.type === 's3-bucket' && s3ObjectsLoading)) {
     return (
       <div className="flex items-center justify-center py-8">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
@@ -219,12 +244,12 @@ export default function FileTable() {
     );
   }
 
-  if (files.length === 0 && folders.length === 0 && s3Buckets.length === 0) {
+  if (files.length === 0 && folders.length === 0 && s3Buckets.length === 0 && s3Objects.length === 0 && s3Prefixes.length === 0) {
     return (
       <div className="text-center py-8">
         <FileIcon className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-        <p className="text-gray-500">No files, folders, or S3 buckets yet</p>
-        <p className="text-sm text-gray-400">Upload your first file, create a folder, or connect to S3 to get started</p>
+        <p className="text-gray-500">No files, folders, buckets, or objects found</p>
+        <p className="text-sm text-gray-400">Upload files, create folders, or navigate to different locations</p>
       </div>
     );
   }
@@ -296,6 +321,102 @@ export default function FileTable() {
                       data-testid={`button-open-bucket-${bucket.name}`}
                     >
                       <Folder className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </TableCell>
+              </TableRow>
+            ))}
+
+            {/* Render S3 prefixes (folders within buckets) */}
+            {currentLocation.type === 's3-bucket' && s3Prefixes.map((prefix, index) => (
+              <TableRow key={`s3-prefix-${prefix}-${index}`} className="hover:bg-blue-50 cursor-pointer">
+                <TableCell>
+                  <Checkbox disabled />
+                </TableCell>
+                <TableCell>
+                  <div className="flex items-center space-x-3">
+                    <div className="w-8 h-8 bg-blue-100 rounded flex items-center justify-center">
+                      <Folder className="h-5 w-5 text-blue-600" />
+                    </div>
+                    <div>
+                      <p className="font-medium text-gray-900">{prefix.replace(/\/$/, '')}</p>
+                      <p className="text-sm text-gray-500">S3 Folder</p>
+                    </div>
+                  </div>
+                </TableCell>
+                <TableCell className="text-gray-600">
+                  -
+                </TableCell>
+                <TableCell className="text-gray-600">
+                  -
+                </TableCell>
+                <TableCell>
+                  <Badge variant="outline" className="bg-blue-100 text-blue-800">
+                    S3 Folder
+                  </Badge>
+                </TableCell>
+                <TableCell>
+                  <div className="flex items-center space-x-2">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => {
+                        toast({
+                          title: "S3 Folder Navigation",
+                          description: `Navigate into ${prefix} - coming soon!`,
+                        });
+                      }}
+                      data-testid={`button-open-s3-folder-${prefix}`}
+                    >
+                      <Folder className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </TableCell>
+              </TableRow>
+            ))}
+
+            {/* Render S3 objects (files within buckets) */}
+            {currentLocation.type === 's3-bucket' && s3Objects.map((object, index) => (
+              <TableRow key={`s3-object-${object.key}-${index}`} className="hover:bg-gray-50">
+                <TableCell>
+                  <Checkbox disabled />
+                </TableCell>
+                <TableCell>
+                  <div className="flex items-center space-x-3">
+                    <div className="w-8 h-8 bg-gray-100 rounded flex items-center justify-center">
+                      <FileIcon className="h-5 w-5 text-gray-600" />
+                    </div>
+                    <div>
+                      <p className="font-medium text-gray-900">{object.key}</p>
+                      <p className="text-sm text-gray-500">S3 Object</p>
+                    </div>
+                  </div>
+                </TableCell>
+                <TableCell className="text-gray-600">
+                  {object.size ? `${(object.size / 1024).toFixed(1)} KB` : '-'}
+                </TableCell>
+                <TableCell className="text-gray-600">
+                  {object.lastModified ? formatDistanceToNow(new Date(object.lastModified), { addSuffix: true }) : '-'}
+                </TableCell>
+                <TableCell>
+                  <Badge variant="outline" className="bg-gray-100 text-gray-800">
+                    S3 Object
+                  </Badge>
+                </TableCell>
+                <TableCell>
+                  <div className="flex items-center space-x-2">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => {
+                        toast({
+                          title: "S3 Download",
+                          description: `Download ${object.key} - coming soon!`,
+                        });
+                      }}
+                      data-testid={`button-download-s3-object-${object.key}`}
+                    >
+                      <Download className="h-4 w-4" />
                     </Button>
                   </div>
                 </TableCell>
