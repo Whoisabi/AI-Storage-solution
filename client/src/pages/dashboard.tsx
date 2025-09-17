@@ -9,6 +9,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { useQuery, useMutation } from "@tanstack/react-query";
@@ -238,7 +239,7 @@ export default function Dashboard() {
         <Card className="mt-8">
           <CardContent className="p-6">
             <div className="flex items-center justify-between mb-6">
-              <h3 className="text-lg font-semibold text-gray-900">Recent Files</h3>
+              <h3 className="text-lg font-semibold text-gray-900">Virtual Disks</h3>
               
               <div className="flex items-center space-x-4">
                 <Select defaultValue="all">
@@ -309,26 +310,44 @@ export default function Dashboard() {
             
             <div className="space-y-2">
               <Label htmlFor="region">Region</Label>
-              <Select
+              <RadioGroup
                 value={s3Credentials.region}
                 onValueChange={(value) => setS3Credentials(prev => ({
                   ...prev,
                   region: value
                 }))}
+                className="grid grid-cols-1 gap-2"
+                data-testid="radio-group-region"
               >
-                <SelectTrigger data-testid="select-region">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="us-east-1">US East (N. Virginia)</SelectItem>
-                  <SelectItem value="us-west-1">US West (N. California)</SelectItem>
-                  <SelectItem value="us-west-2">US West (Oregon)</SelectItem>
-                  <SelectItem value="eu-west-1">Europe (Ireland)</SelectItem>
-                  <SelectItem value="eu-central-1">Europe (Frankfurt)</SelectItem>
-                  <SelectItem value="ap-southeast-1">Asia Pacific (Singapore)</SelectItem>
-                  <SelectItem value="ap-northeast-1">Asia Pacific (Tokyo)</SelectItem>
-                </SelectContent>
-              </Select>
+                <div className="flex items-center space-x-2">
+                  <RadioGroupItem value="us-east-1" id="us-east-1" />
+                  <Label htmlFor="us-east-1" className="text-sm cursor-pointer">US East (N. Virginia)</Label>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <RadioGroupItem value="us-west-1" id="us-west-1" />
+                  <Label htmlFor="us-west-1" className="text-sm cursor-pointer">US West (N. California)</Label>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <RadioGroupItem value="us-west-2" id="us-west-2" />
+                  <Label htmlFor="us-west-2" className="text-sm cursor-pointer">US West (Oregon)</Label>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <RadioGroupItem value="eu-west-1" id="eu-west-1" />
+                  <Label htmlFor="eu-west-1" className="text-sm cursor-pointer">Europe (Ireland)</Label>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <RadioGroupItem value="eu-central-1" id="eu-central-1" />
+                  <Label htmlFor="eu-central-1" className="text-sm cursor-pointer">Europe (Frankfurt)</Label>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <RadioGroupItem value="ap-southeast-1" id="ap-southeast-1" />
+                  <Label htmlFor="ap-southeast-1" className="text-sm cursor-pointer">Asia Pacific (Singapore)</Label>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <RadioGroupItem value="ap-northeast-1" id="ap-northeast-1" />
+                  <Label htmlFor="ap-northeast-1" className="text-sm cursor-pointer">Asia Pacific (Tokyo)</Label>
+                </div>
+              </RadioGroup>
             </div>
           </div>
           

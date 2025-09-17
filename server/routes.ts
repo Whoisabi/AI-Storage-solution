@@ -317,9 +317,43 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const files = await storage.getFilesByUserId(userId);
       const folders = await storage.getFoldersByUserId(userId);
       
-      const totalFiles = files.length;
+      // Count S3 objects if connected
+      let s3ObjectCount = 0;
+      let s3TotalSize = 0;
+      const credentials = getS3CredentialsFromSession(userId);
+      
+      if (credentials && hasS3CredentialsInSession(userId)) {
+        try {
+          const buckets = await s3Service.listBuckets(credentials);
+          for (const bucket of buckets) {
+            // Paginate through all objects in the bucket
+            let continuationToken: string | undefined = undefined;
+            let hasMore = true;
+            
+            while (hasMore) {
+              const objects = await s3Service.listObjects(bucket.name, '', credentials, continuationToken, 1000);
+              s3ObjectCount += objects.objects.length;
+              s3TotalSize += objects.objects.reduce((sum, obj) => sum + (obj.size || 0), 0);
+              
+              continuationToken = objects.nextToken;
+              hasMore = objects.isTruncated && !!continuationToken;
+              
+              // Safety limit to prevent infinite loops
+              if (s3ObjectCount > 100000) {
+                console.warn(`S3 stats: Hit safety limit of 100k objects for user ${userId}`);
+                break;
+              }
+            }
+          }
+        } catch (s3Error) {
+          console.warn("Error fetching S3 stats:", s3Error);
+          // Continue without S3 stats if there's an error
+        }
+      }
+      
+      const totalFiles = files.length + s3ObjectCount;
       const totalFolders = folders.length;
-      const totalSize = files.reduce((sum, file) => sum + file.size, 0);
+      const totalSize = files.reduce((sum, file) => sum + file.size, 0) + s3TotalSize;
       const sharedFiles = files.filter(file => file.isShared).length;
       const sharedFolders = folders.filter(folder => folder.isShared).length;
       

@@ -65,9 +65,9 @@ export default function FileUpload() {
       );
       // Invalidate relevant queries based on current location
       if (currentLocation.type === 's3-bucket') {
-        queryClient.invalidateQueries({ queryKey: ['/api/s3/objects', currentLocation.name, undefined] });
+        queryClient.invalidateQueries({ queryKey: ['/api/s3/objects', currentLocation.name, ""] });
       } else if (currentLocation.type === 's3-prefix') {
-        queryClient.invalidateQueries({ queryKey: ['/api/s3/objects', currentLocation.name, currentLocation.prefix] });
+        queryClient.invalidateQueries({ queryKey: ['/api/s3/objects', currentLocation.bucketName, currentLocation.prefix] });
       } else {
         queryClient.invalidateQueries({ queryKey: ['/api/files', currentLocation.type, currentLocation.id] });
       }
