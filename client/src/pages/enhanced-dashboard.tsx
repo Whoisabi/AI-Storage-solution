@@ -305,7 +305,7 @@ export default function EnhancedDashboard() {
                 <div className="relative">
                   <Input 
                     type="text" 
-                    placeholder="Search files and folders..." 
+                    placeholder="Search disks..." 
                     className="pl-10 pr-4 py-2 w-64"
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
@@ -324,7 +324,7 @@ export default function EnhancedDashboard() {
                     <Database className="h-6 w-6 text-blue-600" />
                   </div>
                   <div>
-                    <h4 className="font-medium text-blue-900">Selected Disks</h4>
+                    <h4 className="font-medium text-blue-900">Selected Disk</h4>
                     <p className="text-blue-700">{currentLocation.name}</p>
                   </div>
                   <Badge variant="outline" className="bg-blue-100 text-blue-800 ml-auto">
