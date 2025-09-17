@@ -23,7 +23,8 @@ import {
   File as FileIcon,
   ChevronLeft,
   ChevronRight,
-  Folder
+  Folder,
+  Database
 } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 
@@ -38,6 +39,11 @@ interface FileData {
   updatedAt: string;
 }
 
+interface S3Bucket {
+  name: string;
+  creationDate?: string;
+}
+
 export default function FileTable() {
   const [selectedFiles, setSelectedFiles] = useState<number[]>([]);
   const [shareModalOpen, setShareModalOpen] = useState(false);
@@ -50,8 +56,23 @@ export default function FileTable() {
     retry: false,
   });
 
+  // Query S3 connection status
+  const { data: s3Status } = useQuery<{connected: boolean, region: string}>({
+    queryKey: ["/api/s3/status"],
+    retry: false,
+  });
+
+  // Query S3 buckets when connected
+  const { data: s3BucketsData, isLoading: s3BucketsLoading } = useQuery<{buckets: S3Bucket[]}>({
+    queryKey: ["/api/s3/buckets"],
+    enabled: !!s3Status?.connected,
+    retry: false,
+  });
+
   const files = fileData?.files || [];
   const folders = fileData?.folders || [];
+  const s3Buckets = s3BucketsData?.buckets || [];
+  const isS3Connected = s3Status?.connected || false;
 
   const downloadMutation = useMutation({
     mutationFn: async (fileId: number) => {
@@ -188,7 +209,7 @@ export default function FileTable() {
     }
   };
 
-  if (isLoading) {
+  if (isLoading || (isS3Connected && s3BucketsLoading)) {
     return (
       <div className="flex items-center justify-center py-8">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
@@ -196,12 +217,12 @@ export default function FileTable() {
     );
   }
 
-  if (files.length === 0 && folders.length === 0) {
+  if (files.length === 0 && folders.length === 0 && s3Buckets.length === 0) {
     return (
       <div className="text-center py-8">
         <FileIcon className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-        <p className="text-gray-500">No files or folders yet</p>
-        <p className="text-sm text-gray-400">Upload your first file or create a folder to get started</p>
+        <p className="text-gray-500">No files, folders, or S3 buckets yet</p>
+        <p className="text-sm text-gray-400">Upload your first file, create a folder, or connect to S3 to get started</p>
       </div>
     );
   }
@@ -226,7 +247,56 @@ export default function FileTable() {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {/* Render folders first */}
+            {/* Render S3 buckets first (when connected) */}
+            {isS3Connected && s3Buckets.map((bucket) => (
+              <TableRow key={`s3-bucket-${bucket.name}`} className="hover:bg-blue-50 cursor-pointer">
+                <TableCell>
+                  <Checkbox disabled />
+                </TableCell>
+                <TableCell>
+                  <div className="flex items-center space-x-3">
+                    <div className="w-8 h-8 bg-blue-100 rounded flex items-center justify-center">
+                      <Database className="h-5 w-5 text-blue-600" />
+                    </div>
+                    <div>
+                      <p className="font-medium text-gray-900">{bucket.name}</p>
+                      <p className="text-sm text-gray-500">S3 Bucket</p>
+                    </div>
+                  </div>
+                </TableCell>
+                <TableCell className="text-gray-600">
+                  -
+                </TableCell>
+                <TableCell className="text-gray-600">
+                  {bucket.creationDate ? formatDistanceToNow(new Date(bucket.creationDate), { addSuffix: true }) : '-'}
+                </TableCell>
+                <TableCell>
+                  <Badge variant="outline" className="bg-blue-100 text-blue-800">
+                    S3 Bucket
+                  </Badge>
+                </TableCell>
+                <TableCell>
+                  <div className="flex items-center space-x-2">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => {
+                        // TODO: Navigate into bucket - implement in next task
+                        toast({
+                          title: "Bucket Navigation",
+                          description: `Navigate into ${bucket.name} - coming soon!`,
+                        });
+                      }}
+                      data-testid={`button-open-bucket-${bucket.name}`}
+                    >
+                      <Folder className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </TableCell>
+              </TableRow>
+            ))}
+            
+            {/* Render folders */}
             {folders.map((folder) => (
               <TableRow key={`folder-${folder.id}`} className="hover:bg-gray-50">
                 <TableCell>
