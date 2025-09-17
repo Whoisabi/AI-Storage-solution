@@ -7,13 +7,14 @@ import { isUnauthorizedError } from "@/lib/authUtils";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
-import { CloudUpload, File, X } from "lucide-react";
+import { CloudUpload, File, X, Folder, Plus } from "lucide-react";
 
 interface UploadFile {
   file: File;
   progress: number;
   status: 'pending' | 'uploading' | 'success' | 'error';
   error?: string;
+  relativePath?: string; // For folder uploads
 }
 
 export default function FileUpload() {
@@ -21,6 +22,7 @@ export default function FileUpload() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const { currentLocation } = useNavigation();
+  const [dragActive, setDragActive] = useState(false);
 
   const uploadMutation = useMutation({
     mutationFn: async (file: File) => {
@@ -105,11 +107,38 @@ export default function FileUpload() {
     },
   });
 
+  const handleFolderUpload = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(event.target.files || []);
+    if (files.length === 0) return;
+
+    const newUploadFiles = files.map(file => ({
+      file,
+      progress: 0,
+      status: 'pending' as const,
+      relativePath: (file as any).webkitRelativePath || file.name,
+    }));
+
+    setUploadFiles(prev => [...prev, ...newUploadFiles]);
+
+    // Start uploading files
+    files.forEach(file => {
+      setUploadFiles(prev => 
+        prev.map(uf => 
+          uf.file === file 
+            ? { ...uf, status: 'uploading', progress: 10 }
+            : uf
+        )
+      );
+      uploadMutation.mutate(file);
+    });
+  }, [uploadMutation]);
+
   const onDrop = useCallback((acceptedFiles: File[]) => {
     const newUploadFiles = acceptedFiles.map(file => ({
       file,
       progress: 0,
       status: 'pending' as const,
+      relativePath: (file as any).webkitRelativePath || file.name,
     }));
 
     setUploadFiles(prev => [...prev, ...newUploadFiles]);
@@ -131,6 +160,9 @@ export default function FileUpload() {
     onDrop,
     multiple: true,
     maxSize: 100 * 1024 * 1024, // 100MB
+    accept: undefined, // Accept all file types
+    onDragEnter: () => setDragActive(true),
+    onDragLeave: () => setDragActive(false),
   });
 
   const removeFile = (fileToRemove: File) => {
@@ -158,7 +190,7 @@ export default function FileUpload() {
         <div 
           {...getRootProps()} 
           className={`border-2 border-dashed rounded-lg p-8 text-center cursor-pointer transition-colors ${
-            isDragActive 
+            isDragActive || dragActive
               ? 'border-primary bg-blue-50' 
               : 'border-gray-300 hover:border-primary hover:bg-blue-50'
           }`}
@@ -170,16 +202,36 @@ export default function FileUpload() {
             </div>
             <div>
               <p className="text-lg font-medium text-gray-900">
-                {isDragActive ? 'Drop files here' : 'Drop files here or click to upload'}
+                {isDragActive || dragActive ? 'Drop files or folders here' : 'Drop files or folders here, or use the buttons below'}
               </p>
               <p className="text-sm text-gray-500 mt-1">
-                Support for a single or bulk upload. Maximum file size: 100MB
+                Support for files and folders. Any file types accepted. Maximum file size: 100MB
               </p>
             </div>
-            {!isDragActive && (
-              <Button className="bg-primary hover:bg-blue-700">
-                Browse Files
-              </Button>
+            {!(isDragActive || dragActive) && (
+              <div className="flex items-center space-x-4">
+                <Button className="bg-primary hover:bg-blue-700" data-testid="button-upload-files">
+                  <File className="h-4 w-4 mr-2" />
+                  Browse Files
+                </Button>
+                <input
+                  type="file"
+                  multiple
+                  {...({ webkitdirectory: "", directory: "" } as any)}
+                  onChange={handleFolderUpload}
+                  className="hidden"
+                  id="folder-upload"
+                  data-testid="input-folder-upload"
+                />
+                <Button 
+                  variant="outline"
+                  onClick={() => document.getElementById('folder-upload')?.click()}
+                  data-testid="button-upload-folder"
+                >
+                  <Folder className="h-4 w-4 mr-2" />
+                  Browse Folders
+                </Button>
+              </div>
             )}
           </div>
         </div>

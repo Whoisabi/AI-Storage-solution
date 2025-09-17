@@ -7,7 +7,7 @@ import { NavigationProvider } from "@/hooks/useNavigation";
 import { useAuth } from "@/hooks/useAuth";
 import NotFound from "@/pages/not-found";
 import Landing from "@/pages/landing";
-import Dashboard from "@/pages/dashboard";
+import Dashboard from "@/pages/enhanced-dashboard";
 import MyFiles from "@/pages/my-files";
 import Shared from "@/pages/shared";
 

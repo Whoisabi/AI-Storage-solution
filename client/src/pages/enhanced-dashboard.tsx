@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
+import { useNavigation } from "@/hooks/useNavigation";
 import { isUnauthorizedError } from "@/lib/authUtils";
 import Sidebar from "@/components/sidebar";
 import FileUpload from "@/components/file-upload";
@@ -8,18 +9,52 @@ import FileTable from "@/components/file-table";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Badge } from "@/components/ui/badge";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { useQuery, useMutation } from "@tanstack/react-query";
-import { apiRequest, queryClient } from "@/lib/queryClient";
-import { Search, Plus, HardDrive, CheckCircle, FileText, Share, FolderPlus, Wifi, WifiOff } from "lucide-react";
+import { queryClient } from "@/lib/queryClient";
+import { 
+  Search, 
+  CheckCircle, 
+  FileText, 
+  Share, 
+  Wifi, 
+  WifiOff, 
+  Database, 
+  ArrowLeft, 
+  Folder,
+  HardDrive 
+} from "lucide-react";
 
-export default function Dashboard() {
+interface StatsData {
+  totalFiles?: number;
+  totalFolders?: number;
+  totalSize?: number;
+  sharedFiles?: number;
+  totalCapacity?: number;
+  usagePercentage?: number;
+}
+
+interface S3StatusData {
+  connected?: boolean;
+  region?: string;
+}
+
+interface S3BucketData {
+  buckets: Array<{
+    name: string;
+    creationDate?: string;
+  }>;
+}
+
+export default function EnhancedDashboard() {
   const { toast } = useToast();
   const { isAuthenticated, isLoading } = useAuth();
+  const { currentLocation, navigateTo, navigateBack } = useNavigation();
   const [showConnectionModal, setShowConnectionModal] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
   const [s3Credentials, setS3Credentials] = useState({
     accessKeyId: '',
     secretAccessKey: '',
@@ -41,28 +76,26 @@ export default function Dashboard() {
     }
   }, [isAuthenticated, isLoading, toast]);
 
-  const { data: stats, isLoading: statsLoading } = useQuery<{
-    totalFiles?: number;
-    totalFolders?: number;
-    totalSize?: number;
-    sharedFiles?: number;
-    totalCapacity?: number;
-    usagePercentage?: number;
-  }>({
+  const { data: stats, isLoading: statsLoading } = useQuery<StatsData>({
     queryKey: ["/api/stats"],
     retry: false,
   });
 
   // Query S3 connection status from server
-  const { data: s3Status, isLoading: s3StatusLoading } = useQuery<{
-    connected?: boolean;
-    region?: string;
-  }>({
+  const { data: s3Status, isLoading: s3StatusLoading } = useQuery<S3StatusData>({
     queryKey: ["/api/s3/status"],
     retry: false,
   });
 
+  // Query S3 buckets when connected
+  const { data: s3BucketsData } = useQuery<S3BucketData>({
+    queryKey: ["/api/s3/buckets"],
+    enabled: !!s3Status?.connected,
+    retry: false,
+  });
+
   const isS3Connected = s3Status?.connected || false;
+  const s3Buckets = s3BucketsData?.buckets || [];
 
   const formatFileSize = (bytes: number) => {
     if (bytes === 0) return '0 Bytes';
@@ -92,6 +125,7 @@ export default function Dashboard() {
     onSuccess: () => {
       // Invalidate connection status query to refetch
       queryClient.invalidateQueries({ queryKey: ["/api/s3/status"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/s3/buckets"] });
       setShowConnectionModal(false);
       setS3Credentials({ accessKeyId: '', secretAccessKey: '', region: 'us-east-1' });
       toast({
@@ -142,15 +176,6 @@ export default function Dashboard() {
           </div>
           
           <div className="flex items-center space-x-4">
-            <div className="relative">
-              <Input 
-                type="text" 
-                placeholder="Search files..." 
-                className="pl-10 pr-4 py-2 w-64"
-              />
-              <Search className="h-4 w-4 absolute left-3 top-3 text-gray-400" />
-            </div>
-            
             <Button 
               className={`flex items-center space-x-2 ${
                 isS3Connected 
@@ -242,40 +267,126 @@ export default function Dashboard() {
           </Card>
         </div>
 
-        {/* File Upload Zone */}
+        {/* Enhanced File Upload Zone */}
         <FileUpload />
 
-        {/* File Management */}
+        {/* Enhanced File Management */}
         <Card className="mt-8">
           <CardContent className="p-6">
+            {/* Virtual Disks Header with Navigation */}
             <div className="flex items-center justify-between mb-6">
-              <h3 className="text-lg font-semibold text-gray-900">Virtual Disks</h3>
+              <div className="flex items-center space-x-4">
+                <h3 className="text-lg font-semibold text-gray-900">Virtual Disks</h3>
+                
+                {/* Navigation breadcrumb */}
+                {currentLocation.type !== 'root' && (
+                  <div className="flex items-center space-x-2">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={navigateBack}
+                      className="flex items-center space-x-1"
+                      data-testid="button-back"
+                    >
+                      <ArrowLeft className="h-4 w-4" />
+                      <span>Back</span>
+                    </Button>
+                  </div>
+                )}
+              </div>
               
               <div className="flex items-center space-x-4">
-                <Select defaultValue="all">
-                  <SelectTrigger className="w-40">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">All Files</SelectItem>
-                    <SelectItem value="documents">Documents</SelectItem>
-                    <SelectItem value="images">Images</SelectItem>
-                    <SelectItem value="videos">Videos</SelectItem>
-                  </SelectContent>
-                </Select>
-                
-                <div className="flex bg-gray-100 rounded-lg">
-                  <Button variant="ghost" size="sm" className="bg-white shadow-sm text-primary">
-                    <FileText className="h-4 w-4" />
-                  </Button>
-                  <Button variant="ghost" size="sm" className="text-gray-500">
-                    <HardDrive className="h-4 w-4" />
-                  </Button>
+                {/* Search functionality replacing filters */}
+                <div className="relative">
+                  <Input 
+                    type="text" 
+                    placeholder="Search files and folders..." 
+                    className="pl-10 pr-4 py-2 w-64"
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    data-testid="input-search"
+                  />
+                  <Search className="h-4 w-4 absolute left-3 top-3 text-gray-400" />
                 </div>
               </div>
             </div>
             
-            <FileTable />
+            {/* Selected Bucket Display */}
+            {isS3Connected && currentLocation.type === 's3-bucket' && (
+              <div className="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                <div className="flex items-center space-x-3">
+                  <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
+                    <Database className="h-6 w-6 text-blue-600" />
+                  </div>
+                  <div>
+                    <h4 className="font-medium text-blue-900">Selected S3 Bucket</h4>
+                    <p className="text-blue-700">{currentLocation.name}</p>
+                  </div>
+                  <Badge variant="outline" className="bg-blue-100 text-blue-800 ml-auto">
+                    S3 Connected
+                  </Badge>
+                </div>
+              </div>
+            )}
+            
+            {/* S3 Prefix Display */}
+            {isS3Connected && currentLocation.type === 's3-prefix' && (
+              <div className="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                <div className="flex items-center space-x-3">
+                  <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
+                    <Folder className="h-6 w-6 text-blue-600" />
+                  </div>
+                  <div>
+                    <h4 className="font-medium text-blue-900">S3 Folder: {currentLocation.name}</h4>
+                    <p className="text-blue-700">Bucket: {currentLocation.bucketName}</p>
+                  </div>
+                  <Badge variant="outline" className="bg-blue-100 text-blue-800 ml-auto">
+                    S3 Folder
+                  </Badge>
+                </div>
+              </div>
+            )}
+            
+            {/* S3 Buckets Selection (only when at root and connected) */}
+            {isS3Connected && currentLocation.type === 'root' && s3Buckets.length > 0 && (
+              <div className="mb-6">
+                <h4 className="text-md font-medium text-gray-700 mb-3">Available S3 Buckets</h4>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                  {s3Buckets.map((bucket) => (
+                    <Card 
+                      key={bucket.name}
+                      className="cursor-pointer hover:shadow-md transition-shadow border-blue-200 bg-blue-50"
+                      onClick={() => {
+                        const newPath = [...currentLocation.path, {
+                          type: 's3-bucket',
+                          name: bucket.name
+                        }];
+                        navigateTo({
+                          type: 's3-bucket',
+                          name: bucket.name,
+                          path: newPath
+                        });
+                      }}
+                      data-testid={`card-bucket-${bucket.name}`}
+                    >
+                      <CardContent className="p-4">
+                        <div className="flex items-center space-x-3">
+                          <div className="w-8 h-8 bg-blue-100 rounded flex items-center justify-center">
+                            <Database className="h-5 w-5 text-blue-600" />
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <p className="font-medium text-blue-900 truncate">{bucket.name}</p>
+                            <p className="text-sm text-blue-600">S3 Bucket</p>
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+              </div>
+            )}
+            
+            <FileTable searchQuery={searchQuery} />
           </CardContent>
         </Card>
       </main>

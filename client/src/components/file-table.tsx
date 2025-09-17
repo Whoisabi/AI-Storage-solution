@@ -45,7 +45,11 @@ interface S3Bucket {
   creationDate?: string;
 }
 
-export default function FileTable() {
+interface FileTableProps {
+  searchQuery?: string;
+}
+
+export default function FileTable({ searchQuery = '' }: FileTableProps) {
   const [selectedFiles, setSelectedFiles] = useState<number[]>([]);
   const [shareModalOpen, setShareModalOpen] = useState(false);
   const [selectedFile, setSelectedFile] = useState<FileData | null>(null);
@@ -108,6 +112,23 @@ export default function FileTable() {
   const s3Objects = s3ObjectsData?.objects || [];
   const s3Prefixes = s3ObjectsData?.prefixes || [];
   const isS3Connected = s3Status?.connected || false;
+
+  // Filter items based on search query
+  const filteredFiles = files.filter(file => 
+    searchQuery === '' || file.name.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+  const filteredFolders = folders.filter(folder => 
+    searchQuery === '' || folder.name.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+  const filteredS3Buckets = s3Buckets.filter(bucket => 
+    searchQuery === '' || bucket.name.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+  const filteredS3Objects = s3Objects.filter(obj => 
+    searchQuery === '' || obj.key.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+  const filteredS3Prefixes = s3Prefixes.filter(prefix => 
+    searchQuery === '' || prefix.toLowerCase().includes(searchQuery.toLowerCase())
+  );
 
   const downloadMutation = useMutation({
     mutationFn: async (fileId: number) => {
@@ -215,7 +236,7 @@ export default function FileTable() {
 
   const handleSelectAll = (checked: boolean) => {
     if (checked) {
-      setSelectedFiles(files.map(file => file.id));
+      setSelectedFiles(filteredFiles.map(file => file.id));
     } else {
       setSelectedFiles([]);
     }
@@ -252,7 +273,7 @@ export default function FileTable() {
     );
   }
 
-  if (files.length === 0 && folders.length === 0 && s3Buckets.length === 0 && s3Objects.length === 0 && s3Prefixes.length === 0) {
+  if (filteredFiles.length === 0 && filteredFolders.length === 0 && filteredS3Buckets.length === 0 && filteredS3Objects.length === 0 && filteredS3Prefixes.length === 0) {
     return (
       <div className="text-center py-8">
         <FileIcon className="h-12 w-12 text-gray-400 mx-auto mb-4" />
@@ -270,7 +291,7 @@ export default function FileTable() {
             <TableRow>
               <TableHead className="w-12">
                 <Checkbox
-                  checked={selectedFiles.length === files.length && files.length > 0}
+                  checked={selectedFiles.length === filteredFiles.length && filteredFiles.length > 0}
                   onCheckedChange={handleSelectAll}
                 />
               </TableHead>
@@ -283,7 +304,7 @@ export default function FileTable() {
           </TableHeader>
           <TableBody>
             {/* Render S3 buckets first (when connected) */}
-            {isS3Connected && currentLocation.type === 'root' && s3Buckets.map((bucket) => (
+            {isS3Connected && currentLocation.type === 'root' && filteredS3Buckets.map((bucket) => (
               <TableRow 
                 key={`s3-bucket-${bucket.name}`} 
                 className="hover:bg-blue-50 cursor-pointer"
@@ -351,7 +372,7 @@ export default function FileTable() {
             ))}
 
             {/* Render S3 prefixes (folders within buckets) */}
-            {(currentLocation.type === 's3-bucket' || currentLocation.type === 's3-prefix') && s3Prefixes.map((prefix, index) => (
+            {(currentLocation.type === 's3-bucket' || currentLocation.type === 's3-prefix') && filteredS3Prefixes.map((prefix, index) => (
               <TableRow 
                 key={`s3-prefix-${prefix}-${index}`} 
                 className="hover:bg-blue-50 cursor-pointer"
@@ -427,7 +448,7 @@ export default function FileTable() {
             ))}
 
             {/* Render S3 objects (files within buckets) */}
-            {(currentLocation.type === 's3-bucket' || currentLocation.type === 's3-prefix') && s3Objects.map((object, index) => (
+            {(currentLocation.type === 's3-bucket' || currentLocation.type === 's3-prefix') && filteredS3Objects.map((object, index) => (
               <TableRow key={`s3-object-${object.key}-${index}`} className="hover:bg-gray-50">
                 <TableCell>
                   <Checkbox disabled />
@@ -475,7 +496,7 @@ export default function FileTable() {
             ))}
             
             {/* Render folders */}
-            {folders.map((folder) => (
+            {filteredFolders.map((folder) => (
               <TableRow 
                 key={`folder-${folder.id}`} 
                 className="hover:bg-gray-50 cursor-pointer"
@@ -576,7 +597,7 @@ export default function FileTable() {
             ))}
             
             {/* Render files */}
-            {files.map((file) => (
+            {filteredFiles.map((file) => (
               <TableRow key={`file-${file.id}`} className="hover:bg-gray-50">
                 <TableCell>
                   <Checkbox
