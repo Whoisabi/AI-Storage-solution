@@ -79,18 +79,24 @@ export default function FileTable() {
     retry: false,
   });
 
-  // Query S3 bucket contents when navigated into a bucket
+  // Query S3 bucket contents when navigated into a bucket or prefix
   const { data: s3ObjectsData, isLoading: s3ObjectsLoading } = useQuery<{
     objects: {key: string, lastModified?: string, size?: number}[],
     prefixes: string[]
   }>({
-    queryKey: ["/api/s3/objects", currentLocation.name],
+    queryKey: ["/api/s3/objects", currentLocation.name, currentLocation.prefix],
     queryFn: () => {
       const params = new URLSearchParams();
-      params.append('bucket', currentLocation.name!);
+      if (currentLocation.type === 's3-bucket') {
+        params.append('bucket', currentLocation.name!);
+      } else if (currentLocation.type === 's3-prefix') {
+        params.append('bucket', currentLocation.bucketName!);
+        params.append('prefix', currentLocation.prefix!);
+      }
       return fetch(`/api/s3/objects?${params}`, { credentials: 'include' }).then(res => res.json());
     },
-    enabled: currentLocation.type === 's3-bucket' && !!currentLocation.name,
+    enabled: (currentLocation.type === 's3-bucket' || currentLocation.type === 's3-prefix') && 
+             (!!currentLocation.name || !!currentLocation.bucketName),
     retry: false,
   });
 
@@ -361,9 +367,18 @@ export default function FileTable() {
                       variant="ghost"
                       size="sm"
                       onClick={() => {
-                        toast({
-                          title: "S3 Folder Navigation",
-                          description: `Navigate into ${prefix} - coming soon!`,
+                        const newPath = [...currentLocation.path, {
+                          type: 's3-prefix',
+                          name: prefix.replace(/\/$/, ''),
+                          bucketName: currentLocation.name,
+                          prefix: prefix
+                        }];
+                        navigateTo({
+                          type: 's3-prefix',
+                          name: prefix.replace(/\/$/, ''),
+                          bucketName: currentLocation.name,
+                          prefix: prefix,
+                          path: newPath
                         });
                       }}
                       data-testid={`button-open-s3-folder-${prefix}`}

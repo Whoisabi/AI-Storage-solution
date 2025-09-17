@@ -2,6 +2,7 @@ import { useState, useCallback } from "react";
 import { useDropzone } from "react-dropzone";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
+import { useNavigation } from "@/hooks/useNavigation";
 import { isUnauthorizedError } from "@/lib/authUtils";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -19,13 +20,29 @@ export default function FileUpload() {
   const [uploadFiles, setUploadFiles] = useState<UploadFile[]>([]);
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const { currentLocation } = useNavigation();
 
   const uploadMutation = useMutation({
     mutationFn: async (file: File) => {
       const formData = new FormData();
       formData.append('file', file);
 
-      const response = await fetch('/api/files/upload', {
+      let endpoint = '/api/files/upload';
+      
+      // Add context-specific parameters
+      if (currentLocation.type === 'folder' && currentLocation.id) {
+        formData.append('folderId', currentLocation.id.toString());
+      } else if (currentLocation.type === 's3-bucket' && currentLocation.name) {
+        endpoint = '/api/s3/upload';
+        formData.append('bucket', currentLocation.name);
+        formData.append('prefix', '');
+      } else if (currentLocation.type === 's3-prefix' && currentLocation.bucketName) {
+        endpoint = '/api/s3/upload';
+        formData.append('bucket', currentLocation.bucketName);
+        formData.append('prefix', currentLocation.prefix || '');
+      }
+
+      const response = await fetch(endpoint, {
         method: 'POST',
         body: formData,
         credentials: 'include',
@@ -46,7 +63,14 @@ export default function FileUpload() {
             : uf
         )
       );
-      queryClient.invalidateQueries({ queryKey: ['/api/files'] });
+      // Invalidate relevant queries based on current location
+      if (currentLocation.type === 's3-bucket') {
+        queryClient.invalidateQueries({ queryKey: ['/api/s3/objects', currentLocation.name, undefined] });
+      } else if (currentLocation.type === 's3-prefix') {
+        queryClient.invalidateQueries({ queryKey: ['/api/s3/objects', currentLocation.name, currentLocation.prefix] });
+      } else {
+        queryClient.invalidateQueries({ queryKey: ['/api/files', currentLocation.type, currentLocation.id] });
+      }
       queryClient.invalidateQueries({ queryKey: ['/api/stats'] });
       toast({
         title: "Success",
@@ -120,7 +144,16 @@ export default function FileUpload() {
   return (
     <Card>
       <CardContent className="p-6">
-        <h3 className="text-lg font-semibold text-gray-900 mb-4">Upload Files</h3>
+        <div className="mb-4">
+          <h3 className="text-lg font-semibold text-gray-900">Upload Files</h3>
+          <p className="text-sm text-gray-600 mt-1">
+            {currentLocation.type === 'root' ? 'Uploading to: Root directory' :
+             currentLocation.type === 'folder' ? `Uploading to: ${currentLocation.name} folder` :
+             currentLocation.type === 's3-bucket' ? `Uploading to: ${currentLocation.name} S3 bucket` :
+             currentLocation.type === 's3-prefix' ? `Uploading to: ${currentLocation.bucketName}/${currentLocation.prefix}` :
+             'Uploading to current location'}
+          </p>
+        </div>
         
         <div 
           {...getRootProps()} 

@@ -1,10 +1,12 @@
 import { createContext, useContext, useState, ReactNode } from 'react';
 
 export interface NavigationLocation {
-  type: 'root' | 'folder' | 's3-bucket';
+  type: 'root' | 'folder' | 's3-bucket' | 's3-prefix';
   id?: number;
   name?: string;
-  path: { type: string; id?: number; name: string }[];
+  bucketName?: string;
+  prefix?: string;
+  path: { type: string; id?: number; name: string; bucketName?: string; prefix?: string }[];
 }
 
 interface NavigationContextType {

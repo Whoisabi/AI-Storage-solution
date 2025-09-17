@@ -15,9 +15,11 @@ export default function Breadcrumb() {
     const target = targetPath[targetPath.length - 1];
     
     navigateTo({
-      type: target.type as 'root' | 'folder' | 's3-bucket',
+      type: target.type as 'root' | 'folder' | 's3-bucket' | 's3-prefix',
       id: target.id,
       name: target.name,
+      bucketName: target.bucketName,
+      prefix: target.prefix,
       path: targetPath
     });
   };
@@ -30,6 +32,8 @@ export default function Breadcrumb() {
         return <Folder className="h-4 w-4" />;
       case 's3-bucket':
         return <Database className="h-4 w-4" />;
+      case 's3-prefix':
+        return <Folder className="h-4 w-4" />;
       default:
         return <Folder className="h-4 w-4" />;
     }
