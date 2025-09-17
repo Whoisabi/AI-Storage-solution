@@ -319,11 +319,11 @@ export default function EnhancedDashboard() {
                     <Database className="h-6 w-6 text-blue-600" />
                   </div>
                   <div>
-                    <h4 className="font-medium text-blue-900">Selected S3 Bucket</h4>
+                    <h4 className="font-medium text-blue-900">Selected Disks</h4>
                     <p className="text-blue-700">{currentLocation.name}</p>
                   </div>
                   <Badge variant="outline" className="bg-blue-100 text-blue-800 ml-auto">
-                    S3 Connected
+                    Connected
                   </Badge>
                 </div>
               </div>
@@ -350,7 +350,7 @@ export default function EnhancedDashboard() {
             {/* S3 Buckets Selection (only when at root and connected) */}
             {isS3Connected && currentLocation.type === 'root' && s3Buckets.length > 0 && (
               <div className="mb-6">
-                <h4 className="text-md font-medium text-gray-700 mb-3">Available S3 Buckets</h4>
+                <h4 className="text-md font-medium text-gray-700 mb-3">Available Disks</h4>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
                   {s3Buckets.map((bucket) => (
                     <Card 
