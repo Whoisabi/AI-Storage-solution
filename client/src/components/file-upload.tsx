@@ -107,6 +107,32 @@ export default function FileUpload() {
     },
   });
 
+  const handleFileUpload = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(event.target.files || []);
+    if (files.length === 0) return;
+
+    const newUploadFiles = files.map(file => ({
+      file,
+      progress: 0,
+      status: 'pending' as const,
+      relativePath: file.name,
+    }));
+
+    setUploadFiles(prev => [...prev, ...newUploadFiles]);
+
+    // Start uploading files
+    files.forEach(file => {
+      setUploadFiles(prev => 
+        prev.map(uf => 
+          uf.file === file 
+            ? { ...uf, status: 'uploading', progress: 10 }
+            : uf
+        )
+      );
+      uploadMutation.mutate(file);
+    });
+  }, [uploadMutation]);
+
   const handleFolderUpload = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(event.target.files || []);
     if (files.length === 0) return;
@@ -210,10 +236,25 @@ export default function FileUpload() {
             </div>
             {!(isDragActive || dragActive) && (
               <div className="flex items-center space-x-4">
-                <Button className="bg-primary hover:bg-blue-700" data-testid="button-upload-files">
+                {/* Hidden file input for Browse Files */}
+                <input
+                  type="file"
+                  multiple
+                  onChange={handleFileUpload}
+                  className="hidden"
+                  id="file-upload"
+                  data-testid="input-file-upload"
+                />
+                <Button 
+                  className="bg-primary hover:bg-blue-700" 
+                  onClick={() => document.getElementById('file-upload')?.click()}
+                  data-testid="button-upload-files"
+                >
                   <File className="h-4 w-4 mr-2" />
                   Browse Files
                 </Button>
+                
+                {/* Hidden folder input for Browse Folders */}
                 <input
                   type="file"
                   multiple
