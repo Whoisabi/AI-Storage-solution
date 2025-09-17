@@ -281,9 +281,24 @@ export default function FileTable() {
           </TableHeader>
           <TableBody>
             {/* Render S3 buckets first (when connected) */}
-            {isS3Connected && s3Buckets.map((bucket) => (
-              <TableRow key={`s3-bucket-${bucket.name}`} className="hover:bg-blue-50 cursor-pointer">
-                <TableCell>
+            {isS3Connected && currentLocation.type === 'root' && s3Buckets.map((bucket) => (
+              <TableRow 
+                key={`s3-bucket-${bucket.name}`} 
+                className="hover:bg-blue-50 cursor-pointer"
+                onClick={() => {
+                  const newPath = [...currentLocation.path, {
+                    type: 's3-bucket',
+                    name: bucket.name
+                  }];
+                  navigateTo({
+                    type: 's3-bucket',
+                    name: bucket.name,
+                    path: newPath
+                  });
+                }}
+                data-testid={`row-bucket-${bucket.name}`}
+              >
+                <TableCell onClick={(e) => e.stopPropagation()}>
                   <Checkbox disabled />
                 </TableCell>
                 <TableCell>
@@ -308,7 +323,7 @@ export default function FileTable() {
                     S3 Bucket
                   </Badge>
                 </TableCell>
-                <TableCell>
+                <TableCell onClick={(e) => e.stopPropagation()}>
                   <div className="flex items-center space-x-2">
                     <Button
                       variant="ghost"
@@ -334,9 +349,28 @@ export default function FileTable() {
             ))}
 
             {/* Render S3 prefixes (folders within buckets) */}
-            {currentLocation.type === 's3-bucket' && s3Prefixes.map((prefix, index) => (
-              <TableRow key={`s3-prefix-${prefix}-${index}`} className="hover:bg-blue-50 cursor-pointer">
-                <TableCell>
+            {(currentLocation.type === 's3-bucket' || currentLocation.type === 's3-prefix') && s3Prefixes.map((prefix, index) => (
+              <TableRow 
+                key={`s3-prefix-${prefix}-${index}`} 
+                className="hover:bg-blue-50 cursor-pointer"
+                onClick={() => {
+                  const newPath = [...currentLocation.path, {
+                    type: 's3-prefix',
+                    name: prefix.replace(/\/$/, ''),
+                    bucketName: currentLocation.bucketName || currentLocation.name,
+                    prefix: prefix
+                  }];
+                  navigateTo({
+                    type: 's3-prefix',
+                    name: prefix.replace(/\/$/, ''),
+                    bucketName: currentLocation.bucketName || currentLocation.name,
+                    prefix: prefix,
+                    path: newPath
+                  });
+                }}
+                data-testid={`row-s3-folder-${prefix}`}
+              >
+                <TableCell onClick={(e) => e.stopPropagation()}>
                   <Checkbox disabled />
                 </TableCell>
                 <TableCell>
@@ -361,7 +395,7 @@ export default function FileTable() {
                     S3 Folder
                   </Badge>
                 </TableCell>
-                <TableCell>
+                <TableCell onClick={(e) => e.stopPropagation()}>
                   <div className="flex items-center space-x-2">
                     <Button
                       variant="ghost"
@@ -370,13 +404,13 @@ export default function FileTable() {
                         const newPath = [...currentLocation.path, {
                           type: 's3-prefix',
                           name: prefix.replace(/\/$/, ''),
-                          bucketName: currentLocation.name,
+                          bucketName: currentLocation.bucketName || currentLocation.name,
                           prefix: prefix
                         }];
                         navigateTo({
                           type: 's3-prefix',
                           name: prefix.replace(/\/$/, ''),
-                          bucketName: currentLocation.name,
+                          bucketName: currentLocation.bucketName || currentLocation.name,
                           prefix: prefix,
                           path: newPath
                         });
@@ -391,7 +425,7 @@ export default function FileTable() {
             ))}
 
             {/* Render S3 objects (files within buckets) */}
-            {currentLocation.type === 's3-bucket' && s3Objects.map((object, index) => (
+            {(currentLocation.type === 's3-bucket' || currentLocation.type === 's3-prefix') && s3Objects.map((object, index) => (
               <TableRow key={`s3-object-${object.key}-${index}`} className="hover:bg-gray-50">
                 <TableCell>
                   <Checkbox disabled />
@@ -440,25 +474,28 @@ export default function FileTable() {
             
             {/* Render folders */}
             {folders.map((folder) => (
-              <TableRow key={`folder-${folder.id}`} className="hover:bg-gray-50 cursor-pointer">
-                <TableCell>
+              <TableRow 
+                key={`folder-${folder.id}`} 
+                className="hover:bg-gray-50 cursor-pointer"
+                onClick={() => {
+                  const newPath = [...currentLocation.path, {
+                    type: 'folder',
+                    id: folder.id,
+                    name: folder.name
+                  }];
+                  navigateTo({
+                    type: 'folder',
+                    id: folder.id,
+                    name: folder.name,
+                    path: newPath
+                  });
+                }}
+                data-testid={`row-folder-${folder.id}`}
+              >
+                <TableCell onClick={(e) => e.stopPropagation()}>
                   <Checkbox disabled />
                 </TableCell>
-                <TableCell
-                  onClick={() => {
-                    const newPath = [...currentLocation.path, {
-                      type: 'folder',
-                      id: folder.id,
-                      name: folder.name
-                    }];
-                    navigateTo({
-                      type: 'folder',
-                      id: folder.id,
-                      name: folder.name,
-                      path: newPath
-                    });
-                  }}
-                >
+                <TableCell>
                   <div className="flex items-center space-x-3">
                     <div className="w-8 h-8 bg-blue-100 rounded flex items-center justify-center">
                       <Folder className="h-5 w-5 text-blue-600" />
