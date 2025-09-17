@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 import { isUnauthorizedError } from "@/lib/authUtils";
@@ -9,12 +9,22 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
 import { useQuery } from "@tanstack/react-query";
-import { Search, Plus, HardDrive, CheckCircle, FileText, Share, FolderPlus } from "lucide-react";
+import { Search, Plus, HardDrive, CheckCircle, FileText, Share, FolderPlus, Wifi, WifiOff } from "lucide-react";
 
 export default function Dashboard() {
   const { toast } = useToast();
   const { isAuthenticated, isLoading } = useAuth();
+  const [isS3Connected, setIsS3Connected] = useState(false);
+  const [showConnectionModal, setShowConnectionModal] = useState(false);
+  const [s3Credentials, setS3Credentials] = useState({
+    accessKeyId: '',
+    secretAccessKey: '',
+    region: 'us-east-1'
+  });
+  const [isConnecting, setIsConnecting] = useState(false);
 
   // Redirect to home if not authenticated
   useEffect(() => {
@@ -42,6 +52,52 @@ export default function Dashboard() {
     const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB'];
     const i = Math.floor(Math.log(bytes) / Math.log(k));
     return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+  };
+
+  const handleS3Connect = async () => {
+    if (!s3Credentials.accessKeyId || !s3Credentials.secretAccessKey) {
+      toast({
+        title: "Missing Credentials",
+        description: "Please enter both access key and secret key",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsConnecting(true);
+    try {
+      const response = await fetch('/api/s3/connect', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(s3Credentials),
+        credentials: 'include',
+      });
+
+      if (response.ok) {
+        setIsS3Connected(true);
+        setShowConnectionModal(false);
+        toast({
+          title: "Connection Successful",
+          description: "S3 connection is active",
+          variant: "default",
+        });
+      } else {
+        const error = await response.json();
+        toast({
+          title: "Connection Failed",
+          description: error.message || "Invalid credentials",
+          variant: "destructive",
+        });
+      }
+    } catch (error) {
+      toast({
+        title: "Connection Error",
+        description: "Failed to connect to S3",
+        variant: "destructive",
+      });
+    } finally {
+      setIsConnecting(false);
+    }
   };
 
   if (isLoading) {
@@ -75,23 +131,25 @@ export default function Dashboard() {
             </div>
             
             <Button 
-              className="bg-primary hover:bg-blue-700 flex items-center space-x-2"
-              onClick={() => {
-                const folderName = prompt('Enter folder name:');
-                if (folderName) {
-                  fetch('/api/folders', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ name: folderName }),
-                    credentials: 'include',
-                  }).then(() => {
-                    window.location.reload();
-                  });
-                }
-              }}
+              className={`flex items-center space-x-2 ${
+                isS3Connected 
+                  ? "bg-green-600 hover:bg-green-700" 
+                  : "bg-primary hover:bg-blue-700"
+              }`}
+              onClick={() => setShowConnectionModal(true)}
+              data-testid="button-connection"
             >
-              <FolderPlus className="h-4 w-4" />
-              <span>New Folder</span>
+              {isS3Connected ? (
+                <>
+                  <Wifi className="h-4 w-4" />
+                  <span>Connected</span>
+                </>
+              ) : (
+                <>
+                  <WifiOff className="h-4 w-4" />
+                  <span>Connect S3</span>
+                </>
+              )}
             </Button>
           </div>
         </div>
@@ -200,6 +258,88 @@ export default function Dashboard() {
           </CardContent>
         </Card>
       </main>
+      
+      {/* S3 Connection Modal */}
+      <Dialog open={showConnectionModal} onOpenChange={setShowConnectionModal}>
+        <DialogContent className="sm:max-w-[425px]" data-testid="modal-s3-connection">
+          <DialogHeader>
+            <DialogTitle>Connect to S3</DialogTitle>
+          </DialogHeader>
+          
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label htmlFor="accessKeyId">Access Key ID</Label>
+              <Input
+                id="accessKeyId"
+                type="text"
+                placeholder="Enter your AWS Access Key ID"
+                value={s3Credentials.accessKeyId}
+                onChange={(e) => setS3Credentials(prev => ({
+                  ...prev,
+                  accessKeyId: e.target.value
+                }))}
+                data-testid="input-access-key"
+              />
+            </div>
+            
+            <div className="space-y-2">
+              <Label htmlFor="secretAccessKey">Secret Access Key</Label>
+              <Input
+                id="secretAccessKey"
+                type="password"
+                placeholder="Enter your AWS Secret Access Key"
+                value={s3Credentials.secretAccessKey}
+                onChange={(e) => setS3Credentials(prev => ({
+                  ...prev,
+                  secretAccessKey: e.target.value
+                }))}
+                data-testid="input-secret-key"
+              />
+            </div>
+            
+            <div className="space-y-2">
+              <Label htmlFor="region">Region</Label>
+              <Select
+                value={s3Credentials.region}
+                onValueChange={(value) => setS3Credentials(prev => ({
+                  ...prev,
+                  region: value
+                }))}
+              >
+                <SelectTrigger data-testid="select-region">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="us-east-1">US East (N. Virginia)</SelectItem>
+                  <SelectItem value="us-west-1">US West (N. California)</SelectItem>
+                  <SelectItem value="us-west-2">US West (Oregon)</SelectItem>
+                  <SelectItem value="eu-west-1">Europe (Ireland)</SelectItem>
+                  <SelectItem value="eu-central-1">Europe (Frankfurt)</SelectItem>
+                  <SelectItem value="ap-southeast-1">Asia Pacific (Singapore)</SelectItem>
+                  <SelectItem value="ap-northeast-1">Asia Pacific (Tokyo)</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+          
+          <DialogFooter>
+            <Button 
+              variant="outline" 
+              onClick={() => setShowConnectionModal(false)}
+              data-testid="button-cancel"
+            >
+              Cancel
+            </Button>
+            <Button 
+              onClick={handleS3Connect}
+              disabled={isConnecting}
+              data-testid="button-connect"
+            >
+              {isConnecting ? "Connecting..." : "Connect"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
