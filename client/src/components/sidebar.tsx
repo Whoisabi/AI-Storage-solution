@@ -67,33 +67,27 @@ export default function Sidebar() {
         {/* Navigation Links */}
         <ul className="space-y-2 px-6">
           <li>
-            <Link href="/">
-              <a className={`flex items-center space-x-3 p-3 rounded-lg transition-colors ${
-                location === "/" ? "bg-primary text-white" : "text-gray-700 hover:bg-gray-100"
-              }`}>
-                <Home className="h-5 w-5" />
-                <span>Dashboard</span>
-              </a>
+            <Link href="/" className={`flex items-center space-x-3 p-3 rounded-lg transition-colors ${
+              location === "/" ? "bg-primary text-white" : "text-gray-700 hover:bg-gray-100"
+            }`}>
+              <Home className="h-5 w-5" />
+              <span>Dashboard</span>
             </Link>
           </li>
           <li>
-            <Link href="/files">
-              <a className={`flex items-center space-x-3 p-3 rounded-lg transition-colors ${
-                location === "/files" ? "bg-primary text-white" : "text-gray-700 hover:bg-gray-100"
-              }`}>
-                <Folder className="h-5 w-5" />
-                <span>My Files</span>
-              </a>
+            <Link href="/files" className={`flex items-center space-x-3 p-3 rounded-lg transition-colors ${
+              location === "/files" ? "bg-primary text-white" : "text-gray-700 hover:bg-gray-100"
+            }`}>
+              <Folder className="h-5 w-5" />
+              <span>My Files</span>
             </Link>
           </li>
           <li>
-            <Link href="/shared">
-              <a className={`flex items-center space-x-3 p-3 rounded-lg transition-colors ${
-                location === "/shared" ? "bg-primary text-white" : "text-gray-700 hover:bg-gray-100"
-              }`}>
-                <Share className="h-5 w-5" />
-                <span>Shared</span>
-              </a>
+            <Link href="/shared" className={`flex items-center space-x-3 p-3 rounded-lg transition-colors ${
+              location === "/shared" ? "bg-primary text-white" : "text-gray-700 hover:bg-gray-100"
+            }`}>
+              <Share className="h-5 w-5" />
+              <span>Shared</span>
             </Link>
           </li>
           <li>

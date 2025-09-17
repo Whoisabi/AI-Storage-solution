@@ -2,7 +2,7 @@
 FROM node:20-alpine
 
 # Install dependencies needed for node-gyp and native dependencies
-RUN apk add --no-cache python3 make g++ postgresql-client curl bash
+RUN apk add --no-cache python3 make g++ postgresql-client curl bash wget
 
 # Set working directory
 WORKDIR /app

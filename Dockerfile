@@ -2,7 +2,7 @@
 FROM node:20-alpine
 
 # Install dependencies needed for node-gyp and native dependencies
-RUN apk add --no-cache python3 make g++ postgresql-client curl bash
+RUN apk add --no-cache python3 make g++ postgresql-client curl bash wget
 
 # Set working directory
 WORKDIR /app
@@ -23,8 +23,11 @@ RUN chmod +x /docker-entrypoint.sh
 # Build the application
 RUN npm run build
 
-# Remove dev dependencies after build
-RUN npm prune --omit=dev
+# Install necessary tools for production schema management
+RUN npm install drizzle-kit@^0.30.6 tsx@^4.20.5 typescript@5.6.3 --save
+
+# Remove other dev dependencies but keep migration tools
+RUN npm prune --omit=dev --omit=optional || true
 
 # Expose port 5000
 EXPOSE 5000

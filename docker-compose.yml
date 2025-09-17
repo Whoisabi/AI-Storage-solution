@@ -6,16 +6,17 @@ services:
     image: postgres:15-alpine
     container_name: file-share-db
     environment:
-      POSTGRES_DB: fileshare
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
-    ports:
-      - "5432:5432"
+      POSTGRES_DB: ${POSTGRES_DB:-fileshare}
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-YourSecurePasswordHere123!}
+    # Remove port exposure for production security
+    # ports:
+    #   - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
       - ./init-db.sql:/docker-entrypoint-initdb.d/init-db.sql
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres -d fileshare"]
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-postgres} -d ${POSTGRES_DB:-fileshare}"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -30,9 +31,12 @@ services:
     container_name: file-share-app
     environment:
       - NODE_ENV=production
-      - DATABASE_URL=postgresql://postgres:postgres@database:5432/fileshare?sslmode=disable
+      - DATABASE_URL=postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-YourSecurePasswordHere123!}@database:5432/${POSTGRES_DB:-fileshare}?sslmode=disable
       - DOCKER_ENV=true
       - PORT=5000
+      - POSTGRES_USER=${POSTGRES_USER:-postgres}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-YourSecurePasswordHere123!}
+      - POSTGRES_DB=${POSTGRES_DB:-fileshare}
     ports:
       - "3000:5000"
     depends_on:
@@ -44,7 +48,7 @@ services:
       - app-network
     restart: unless-stopped
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:5000/api/health"]
+      test: ["CMD-SHELL", "wget -q --spider http://localhost:5000/api/health || exit 1"]
       interval: 30s
       timeout: 10s
       retries: 3

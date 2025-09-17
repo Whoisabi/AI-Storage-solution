@@ -56,8 +56,8 @@ temp
 .replit
 attached_assets
 
-# Migrations (generated at runtime)
-migrations
+# Migrations will be generated at runtime
+# migrations
 
 # Misc
 .env.backup
