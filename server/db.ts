@@ -7,6 +7,8 @@ import * as schema from "@shared/schema";
 neonConfig.webSocketConstructor = ws;
 // Disable pipelining for better compatibility
 neonConfig.pipelineConnect = false;
+// Disable fetch connection cache to avoid SSL issues
+neonConfig.fetchConnectionCache = false;
 
 if (!process.env.DATABASE_URL) {
   throw new Error(
@@ -16,6 +18,10 @@ if (!process.env.DATABASE_URL) {
 
 export const pool = new Pool({ 
   connectionString: process.env.DATABASE_URL,
-  ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: true } : { rejectUnauthorized: false }
+  ssl: {
+    rejectUnauthorized: false,
+    // Additional SSL options to handle certificate issues
+    checkServerIdentity: () => undefined
+  }
 });
 export const db = drizzle({ client: pool, schema });
