@@ -10,7 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { apiRequest, queryClient } from "@/lib/queryClient";
@@ -285,6 +285,9 @@ export default function Dashboard() {
         <DialogContent className="sm:max-w-[425px]" data-testid="modal-s3-connection">
           <DialogHeader>
             <DialogTitle>Connect to S3</DialogTitle>
+            <DialogDescription>
+              Enter your AWS credentials to connect to your S3 buckets and access your files.
+            </DialogDescription>
           </DialogHeader>
           
           <div className="space-y-4 py-4">

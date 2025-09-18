@@ -7,6 +7,7 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
+  DialogDescription,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -112,6 +113,9 @@ export default function ShareModal({ isOpen, onClose, file }: ShareModalProps) {
       <DialogContent className="max-w-lg">
         <DialogHeader>
           <DialogTitle>Share File</DialogTitle>
+          <DialogDescription>
+            Generate a shareable link for this file that others can use to access it.
+          </DialogDescription>
         </DialogHeader>
         
         <div className="space-y-6">
