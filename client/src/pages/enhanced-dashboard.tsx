@@ -51,7 +51,7 @@ interface S3BucketData {
 export default function EnhancedDashboard() {
   const { toast } = useToast();
   const { isAuthenticated, isLoading } = useAuth();
-  const { currentLocation, navigateTo, navigateBack } = useNavigation();
+  const { currentLocation, navigateTo, navigateBack, navigateToRoot } = useNavigation();
   const [showConnectionModal, setShowConnectionModal] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [s3Credentials, setS3Credentials] = useState({
@@ -279,23 +279,13 @@ export default function EnhancedDashboard() {
             {/* Virtual Disks Header with Navigation */}
             <div className="flex items-center justify-between mb-6">
               <div className="flex items-center space-x-4">
-                <h3 className="text-lg font-semibold text-gray-900">Virtual Disks</h3>
-                
-                {/* Navigation breadcrumb */}
-                {currentLocation.type !== 'root' && (
-                  <div className="flex items-center space-x-2">
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={navigateBack}
-                      className="flex items-center space-x-1"
-                      data-testid="button-back"
-                    >
-                      <ArrowLeft className="h-4 w-4" />
-                      <span>Back</span>
-                    </Button>
-                  </div>
-                )}
+                <button 
+                  onClick={navigateToRoot}
+                  className="text-lg font-semibold text-gray-900 hover:text-gray-700 cursor-pointer"
+                  data-testid="button-virtual-disks"
+                >
+                  Virtual Disks
+                </button>
               </div>
               
               <div className="flex items-center space-x-4">
@@ -303,7 +293,7 @@ export default function EnhancedDashboard() {
                 <div className="relative">
                   <Input 
                     type="text" 
-                    placeholder="Search disks..." 
+                    placeholder={currentLocation.type === 'root' ? "Search files and folders" : "Search disks..."} 
                     className="pl-10 pr-4 py-2 w-64"
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
@@ -311,6 +301,20 @@ export default function EnhancedDashboard() {
                   />
                   <Search className="h-4 w-4 absolute left-3 top-3 text-gray-400" />
                 </div>
+                
+                {/* Navigation back button on the right */}
+                {currentLocation.type !== 'root' && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={navigateBack}
+                    className="flex items-center space-x-1"
+                    data-testid="button-back"
+                  >
+                    <ArrowLeft className="h-4 w-4" />
+                    <span>Back</span>
+                  </Button>
+                )}
               </div>
             </div>
             
