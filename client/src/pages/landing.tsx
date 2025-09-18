@@ -4,7 +4,11 @@ import { Cloud, Upload, Share, Shield, Users, Zap } from "lucide-react";
 
 export default function Landing() {
   const handleLogin = () => {
-    window.location.href = "/api/login";
+    window.location.href = "/login";
+  };
+
+  const handleSignup = () => {
+    window.location.href = "/signup";
   };
 
   return (
@@ -22,9 +26,14 @@ export default function Landing() {
                 <p className="text-xs text-gray-500">Cloud Solution</p>
               </div>
             </div>
-            <Button onClick={handleLogin} className="bg-primary hover:bg-blue-700">
-              Sign In
-            </Button>
+            <div className="flex gap-2">
+              <Button onClick={handleLogin} variant="outline">
+                Sign In
+              </Button>
+              <Button onClick={handleSignup} className="bg-primary hover:bg-blue-700">
+                Sign Up
+              </Button>
+            </div>
           </div>
         </div>
       </header>
@@ -43,7 +52,7 @@ export default function Landing() {
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <Button 
-                onClick={handleLogin}
+                onClick={handleSignup}
                 size="lg" 
                 className="bg-primary hover:bg-blue-700 text-lg px-8 py-3"
               >
@@ -159,7 +168,7 @@ export default function Landing() {
             Join thousands of users who trust AI Storage for their most important files.
           </p>
           <Button 
-            onClick={handleLogin}
+            onClick={handleSignup}
             size="lg" 
             variant="secondary"
             className="text-lg px-8 py-3"

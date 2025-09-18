@@ -4,12 +4,19 @@ import passport from 'passport';
 import { Strategy as LocalStrategy } from 'passport-local';
 import session from 'express-session';
 import connectPg from 'connect-pg-simple';
+import rateLimit from 'express-rate-limit';
 import type { Express, RequestHandler } from 'express';
 import { storage } from './storage';
 import { signupSchema, loginSchema } from '@shared/schema';
 import { ZodError } from 'zod';
 
 export function getSession() {
+  // Require SESSION_SECRET in production
+  const sessionSecret = process.env.SESSION_SECRET;
+  if (!sessionSecret) {
+    throw new Error('SESSION_SECRET environment variable is required');
+  }
+
   const sessionTtl = 7 * 24 * 60 * 60 * 1000; // 1 week
   const pgStore = connectPg(session);
   const sessionStore = new pgStore({
@@ -19,13 +26,14 @@ export function getSession() {
     tableName: "sessions",
   });
   return session({
-    secret: process.env.SESSION_SECRET || 'your-secret-key-here',
+    secret: sessionSecret,
     store: sessionStore,
     resave: false,
     saveUninitialized: false,
     cookie: {
       httpOnly: true,
-      secure: false, // Set to true in production with HTTPS
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
       maxAge: sessionTtl,
     },
   });
@@ -39,6 +47,19 @@ async function hashPassword(password: string): Promise<string> {
 async function verifyPassword(password: string, hashedPassword: string): Promise<boolean> {
   return bcrypt.compare(password, hashedPassword);
 }
+
+function normalizeEmail(email: string): string {
+  return email.trim().toLowerCase();
+}
+
+// Rate limiting for auth endpoints
+const authLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 5, // Limit each IP to 5 requests per windowMs
+  message: { message: 'Too many authentication attempts, please try again later.' },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
 
 export async function setupAuth(app: Express) {
   app.set("trust proxy", 1);
@@ -54,7 +75,8 @@ export async function setupAuth(app: Express) {
     },
     async (email, password, done) => {
       try {
-        const user = await storage.getUserByEmail(email);
+        const normalizedEmail = normalizeEmail(email);
+        const user = await storage.getUserByEmail(normalizedEmail);
         if (!user) {
           return done(null, false, { message: 'Invalid email or password' });
         }
@@ -88,13 +110,14 @@ export async function setupAuth(app: Express) {
     }
   });
 
-  // Signup endpoint
-  app.post('/api/auth/signup', async (req, res) => {
+  // Signup endpoint with rate limiting
+  app.post('/api/auth/signup', authLimiter, async (req, res) => {
     try {
       const { email, password, firstName, lastName } = signupSchema.parse(req.body);
+      const normalizedEmail = normalizeEmail(email);
       
       // Check if user already exists
-      const existingUser = await storage.getUserByEmail(email);
+      const existingUser = await storage.getUserByEmail(normalizedEmail);
       if (existingUser) {
         return res.status(400).json({ message: 'User with this email already exists' });
       }
@@ -105,22 +128,29 @@ export async function setupAuth(app: Express) {
       
       const newUser = await storage.createUser({
         id: userId,
-        email,
+        email: normalizedEmail,
         password: hashedPassword,
         firstName,
         lastName,
       });
 
-      // Log the user in automatically after signup
-      req.login({ id: newUser.id, email: newUser.email, firstName: newUser.firstName, lastName: newUser.lastName }, (err) => {
-        if (err) {
-          console.error('Login error after signup:', err);
-          return res.status(500).json({ message: 'Account created but login failed' });
+      // Regenerate session for security, then log the user in automatically after signup
+      req.session.regenerate((regenerateErr) => {
+        if (regenerateErr) {
+          console.error('Session regeneration error after signup:', regenerateErr);
+          return res.status(500).json({ message: 'Account created but session setup failed' });
         }
-        res.json({ 
-          success: true, 
-          message: 'Account created successfully',
-          user: { id: newUser.id, email: newUser.email, firstName: newUser.firstName, lastName: newUser.lastName }
+        
+        req.login({ id: newUser.id, email: newUser.email, firstName: newUser.firstName, lastName: newUser.lastName }, (err) => {
+          if (err) {
+            console.error('Login error after signup:', err);
+            return res.status(500).json({ message: 'Account created but login failed' });
+          }
+          res.json({ 
+            success: true, 
+            message: 'Account created successfully',
+            user: { id: newUser.id, email: newUser.email, firstName: newUser.firstName, lastName: newUser.lastName }
+          });
         });
       });
     } catch (error) {
@@ -132,10 +162,11 @@ export async function setupAuth(app: Express) {
     }
   });
 
-  // Login endpoint
-  app.post('/api/auth/login', async (req, res) => {
+  // Login endpoint with rate limiting
+  app.post('/api/auth/login', authLimiter, async (req, res) => {
     try {
       const { email, password } = loginSchema.parse(req.body);
+      const normalizedEmail = normalizeEmail(email);
       
       passport.authenticate('local', (err: any, user: any, info: any) => {
         if (err) {
@@ -147,16 +178,24 @@ export async function setupAuth(app: Express) {
           return res.status(401).json({ message: info?.message || 'Invalid email or password' });
         }
 
-        req.login(user, (loginErr) => {
-          if (loginErr) {
-            console.error('Login error:', loginErr);
-            return res.status(500).json({ message: 'Login failed' });
+        // Regenerate session for security before login
+        req.session.regenerate((regenerateErr) => {
+          if (regenerateErr) {
+            console.error('Session regeneration error:', regenerateErr);
+            return res.status(500).json({ message: 'Login failed due to session error' });
           }
           
-          res.json({ 
-            success: true, 
-            message: 'Login successful',
-            user: { id: user.id, email: user.email, firstName: user.firstName, lastName: user.lastName }
+          req.login(user, (loginErr) => {
+            if (loginErr) {
+              console.error('Login error:', loginErr);
+              return res.status(500).json({ message: 'Login failed' });
+            }
+            
+            res.json({ 
+              success: true, 
+              message: 'Login successful',
+              user: { id: user.id, email: user.email, firstName: user.firstName, lastName: user.lastName }
+            });
           });
         });
       })(req, res);
@@ -180,7 +219,11 @@ export async function setupAuth(app: Express) {
         if (sessionErr) {
           console.error('Session destroy error:', sessionErr);
         }
-        res.clearCookie('connect.sid');
+        res.clearCookie('connect.sid', {
+          httpOnly: true,
+          secure: process.env.NODE_ENV === 'production',
+          sameSite: 'lax'
+        });
         res.json({ success: true, message: 'Logout successful' });
       });
     });
