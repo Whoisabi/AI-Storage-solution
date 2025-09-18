@@ -14,6 +14,16 @@ import {
   TableRow 
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import ShareModal from "./share-modal";
 import { 
   Download, 
@@ -54,6 +64,11 @@ export default function FileTable({ searchQuery = '' }: FileTableProps) {
   const [selectedS3Objects, setSelectedS3Objects] = useState<string[]>([]);
   const [shareModalOpen, setShareModalOpen] = useState(false);
   const [selectedFile, setSelectedFile] = useState<FileData | null>(null);
+  const [deleteConfirmation, setDeleteConfirmation] = useState<{
+    type: 'file' | 's3object' | 'bulk';
+    data?: any;
+    message: string;
+  } | null>(null);
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const { navigateTo, currentLocation } = useNavigation();
@@ -463,16 +478,20 @@ export default function FileTable({ searchQuery = '' }: FileTableProps) {
   };
 
   const handleDelete = (fileId: number) => {
-    if (window.confirm('Are you sure you want to delete this file?')) {
-      deleteMutation.mutate(fileId);
-    }
+    setDeleteConfirmation({
+      type: 'file',
+      data: fileId,
+      message: 'Are you sure you want to delete this file? This action cannot be undone.'
+    });
   };
 
   const handleDeleteS3Object = (objectKey: string) => {
     const bucket = currentLocation.bucketName || currentLocation.name;
-    if (window.confirm('Are you sure you want to delete this S3 object?')) {
-      deleteS3ObjectMutation.mutate({ bucket: bucket!, key: objectKey });
-    }
+    setDeleteConfirmation({
+      type: 's3object',
+      data: { bucket: bucket!, key: objectKey },
+      message: 'Are you sure you want to delete this S3 object? This action cannot be undone.'
+    });
   };
 
   const handleBulkDelete = () => {
@@ -486,9 +505,29 @@ export default function FileTable({ searchQuery = '' }: FileTableProps) {
       return;
     }
     
-    if (window.confirm(`Are you sure you want to delete ${totalSelected} selected items?`)) {
-      bulkDeleteMutation.mutate();
+    setDeleteConfirmation({
+      type: 'bulk',
+      data: null,
+      message: `Are you sure you want to delete ${totalSelected} selected items? This action cannot be undone.`
+    });
+  };
+
+  const handleConfirmDelete = () => {
+    if (!deleteConfirmation) return;
+
+    switch (deleteConfirmation.type) {
+      case 'file':
+        deleteMutation.mutate(deleteConfirmation.data);
+        break;
+      case 's3object':
+        deleteS3ObjectMutation.mutate(deleteConfirmation.data);
+        break;
+      case 'bulk':
+        bulkDeleteMutation.mutate();
+        break;
     }
+    
+    setDeleteConfirmation(null);
   };
 
   if (isLoading || (isS3Connected && s3BucketsLoading) || ((currentLocation.type === 's3-bucket' || currentLocation.type === 's3-prefix') && s3ObjectsLoading)) {
@@ -948,6 +987,28 @@ export default function FileTable({ searchQuery = '' }: FileTableProps) {
           </Button>
         </div>
       </div>
+
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={!!deleteConfirmation} onOpenChange={() => setDeleteConfirmation(null)}>
+        <AlertDialogContent className="max-w-md">
+          <AlertDialogHeader>
+            <AlertDialogTitle>Confirm Delete</AlertDialogTitle>
+            <AlertDialogDescription>
+              {deleteConfirmation?.message}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleConfirmDelete}
+              className="bg-red-600 hover:bg-red-700"
+              data-testid="button-confirm-delete"
+            >
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       <ShareModal
         isOpen={shareModalOpen}

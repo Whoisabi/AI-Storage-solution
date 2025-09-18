@@ -1,4 +1,4 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { useDropzone } from "react-dropzone";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
@@ -198,6 +198,21 @@ export default function FileUpload() {
   const clearCompleted = () => {
     setUploadFiles(prev => prev.filter(uf => uf.status === 'uploading' || uf.status === 'pending'));
   };
+
+  // Auto-clear completed uploads after a delay
+  useEffect(() => {
+    const hasCompletedUploads = uploadFiles.some(uf => uf.status === 'success' || uf.status === 'error');
+    const hasActiveUploads = uploadFiles.some(uf => uf.status === 'uploading' || uf.status === 'pending');
+
+    if (hasCompletedUploads && !hasActiveUploads) {
+      // All uploads are complete (either success or error), auto-clear after 3 seconds
+      const timer = setTimeout(() => {
+        clearCompleted();
+      }, 3000);
+
+      return () => clearTimeout(timer);
+    }
+  }, [uploadFiles]);
 
   return (
     <Card>
