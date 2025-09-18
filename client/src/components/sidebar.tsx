@@ -13,11 +13,11 @@ import {
 import { Link, useLocation } from "wouter";
 
 export default function Sidebar() {
-  const { user } = useAuth();
+  const { user, logout } = useAuth();
   const [location] = useLocation();
 
   const handleLogout = () => {
-    window.location.href = "/api/logout";
+    logout();
   };
 
   const getInitials = (firstName?: string, lastName?: string) => {
