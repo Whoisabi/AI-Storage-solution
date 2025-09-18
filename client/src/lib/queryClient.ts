@@ -55,3 +55,24 @@ export const queryClient = new QueryClient({
     },
   },
 });
+
+// Set specific defaults for critical queries that need fresh data
+queryClient.setQueryDefaults(["/api/stats"], { 
+  staleTime: 0, 
+  refetchOnMount: "always" 
+});
+queryClient.setQueryDefaults(["/api/files"], { 
+  staleTime: 0, 
+  refetchOnMount: "always" 
+});
+queryClient.setQueryDefaults(["/api/s3/buckets"], { 
+  staleTime: 0, 
+  refetchOnMount: "always" 
+});
+queryClient.setQueryDefaults(["/api/s3/objects"], { 
+  staleTime: 0, 
+  refetchOnMount: "always" 
+});
+queryClient.setQueryDefaults(["/api/analytics"], { 
+  staleTime: 0 
+});

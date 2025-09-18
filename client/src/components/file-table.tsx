@@ -205,6 +205,7 @@ export default function FileTable({ searchQuery = '' }: FileTableProps) {
     onSuccess: (_, fileId) => {
       queryClient.invalidateQueries({ queryKey: ['/api/files'] });
       queryClient.invalidateQueries({ queryKey: ['/api/stats'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/analytics'] });
       toast({
         title: "File Deleted",
         description: "File has been successfully deleted",
@@ -251,6 +252,7 @@ export default function FileTable({ searchQuery = '' }: FileTableProps) {
     onSuccess: (_, { key }) => {
       queryClient.invalidateQueries({ queryKey: ['/api/s3/objects'] });
       queryClient.invalidateQueries({ queryKey: ['/api/stats'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/analytics'] });
       toast({
         title: "S3 Object Deleted",
         description: "S3 object has been successfully deleted",
@@ -360,6 +362,7 @@ export default function FileTable({ searchQuery = '' }: FileTableProps) {
       queryClient.invalidateQueries({ queryKey: ['/api/files'] });
       queryClient.invalidateQueries({ queryKey: ['/api/s3/objects'] });
       queryClient.invalidateQueries({ queryKey: ['/api/stats'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/analytics'] });
       toast({
         title: "Items Deleted",
         description: `${result.successCount} items have been successfully deleted`,
@@ -373,6 +376,7 @@ export default function FileTable({ searchQuery = '' }: FileTableProps) {
       queryClient.invalidateQueries({ queryKey: ['/api/files'] });
       queryClient.invalidateQueries({ queryKey: ['/api/s3/objects'] });
       queryClient.invalidateQueries({ queryKey: ['/api/stats'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/analytics'] });
       
       if (isUnauthorizedError(error)) {
         toast({

@@ -85,6 +85,8 @@ export default function EnhancedDashboard() {
     retry: false,
   });
 
+  // Note: S3 connection invalidation is handled in connectMutation.onSuccess to avoid double-fetching
+
   // Query S3 buckets when connected
   const { data: s3BucketsData } = useQuery<S3BucketData>({
     queryKey: ["/api/s3/buckets"],
@@ -126,9 +128,13 @@ export default function EnhancedDashboard() {
       return response.json();
     },
     onSuccess: () => {
-      // Invalidate connection status query to refetch
+      // Invalidate all dependent queries to refresh dashboard data
       queryClient.invalidateQueries({ queryKey: ["/api/s3/status"] });
       queryClient.invalidateQueries({ queryKey: ["/api/s3/buckets"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/stats"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/files"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/analytics"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/s3/objects"] });
       setShowConnectionModal(false);
       setS3Credentials({ accessKeyId: '', secretAccessKey: '' });
       toast({

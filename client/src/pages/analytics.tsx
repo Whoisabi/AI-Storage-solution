@@ -75,6 +75,8 @@ export default function Analytics() {
       if (includeExternal) params.append('includeExternal', 'true');
       return fetch(`/api/analytics?${params}`, { credentials: 'include' }).then(res => res.json());
     },
+    refetchInterval: (query) => document.visibilityState === 'visible' ? 10000 : false,
+    refetchOnWindowFocus: true,
     retry: false,
   });
 

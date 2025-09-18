@@ -74,6 +74,7 @@ export default function FileUpload() {
         queryClient.invalidateQueries({ queryKey: ['/api/files', currentLocation.type, currentLocation.id] });
       }
       queryClient.invalidateQueries({ queryKey: ['/api/stats'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/analytics'] });
       toast({
         title: "Success",
         description: `${file.name} uploaded successfully`,
