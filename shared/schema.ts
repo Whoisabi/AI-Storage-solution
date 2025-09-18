@@ -8,6 +8,8 @@ import {
   serial,
   bigint,
   boolean,
+  integer,
+  type AnyPgColumn,
 } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
@@ -40,7 +42,7 @@ export const folders = pgTable("folders", {
   id: serial("id").primaryKey(),
   userId: varchar("user_id").notNull().references(() => users.id),
   name: varchar("name").notNull(),
-  parentId: serial("parent_id"),
+  parentId: integer("parent_id").references((): AnyPgColumn => folders.id, { onDelete: "set null" }),
   isShared: boolean("is_shared").default(false),
   shareToken: varchar("share_token"),
   createdAt: timestamp("created_at").defaultNow(),
@@ -50,7 +52,7 @@ export const folders = pgTable("folders", {
 export const files = pgTable("files", {
   id: serial("id").primaryKey(),
   userId: varchar("user_id").notNull().references(() => users.id),
-  folderId: serial("folder_id"),
+  folderId: integer("folder_id").references(() => folders.id, { onDelete: "cascade" }),
   name: varchar("name").notNull(),
   originalName: varchar("original_name").notNull(),
   mimeType: varchar("mime_type").notNull(),
