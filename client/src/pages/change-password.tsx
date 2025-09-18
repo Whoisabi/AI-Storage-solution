@@ -1,22 +1,16 @@
 import { useState } from "react";
-import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { z } from "zod";
-import { Separator } from "@/components/ui/separator";
-import { Eye, EyeOff } from "lucide-react";
-
-const emailSchema = z.object({
-  email: z.string().email("Please enter a valid email address"),
-});
+import { Eye, EyeOff, ArrowLeft, Lock } from "lucide-react";
+import { Link, useLocation } from "wouter";
 
 const passwordSchema = z.object({
   currentPassword: z.string().min(1, "Current password is required"),
@@ -27,23 +21,14 @@ const passwordSchema = z.object({
   path: ["confirmPassword"],
 });
 
-type EmailFormData = z.infer<typeof emailSchema>;
 type PasswordFormData = z.infer<typeof passwordSchema>;
 
-export default function EditProfile() {
-  const { user } = useAuth();
+export default function ChangePassword() {
   const { toast } = useToast();
-  const queryClient = useQueryClient();
+  const [, setLocation] = useLocation();
   const [showCurrentPassword, setShowCurrentPassword] = useState(false);
   const [showNewPassword, setShowNewPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-
-  const emailForm = useForm<EmailFormData>({
-    resolver: zodResolver(emailSchema),
-    defaultValues: {
-      email: user?.email || "",
-    },
-  });
 
   const passwordForm = useForm<PasswordFormData>({
     resolver: zodResolver(passwordSchema),
@@ -51,26 +36,6 @@ export default function EditProfile() {
       currentPassword: "",
       newPassword: "",
       confirmPassword: "",
-    },
-  });
-
-  const updateEmailMutation = useMutation({
-    mutationFn: async (data: EmailFormData) => {
-      return apiRequest('POST', '/api/auth/update-email', data);
-    },
-    onSuccess: () => {
-      toast({
-        title: "Email Updated",
-        description: "Your email has been successfully updated.",
-      });
-      queryClient.invalidateQueries({ queryKey: ["/api/auth/user"] });
-    },
-    onError: (error: any) => {
-      toast({
-        title: "Error",
-        description: error.message || "Failed to update email",
-        variant: "destructive",
-      });
     },
   });
 
@@ -87,6 +52,8 @@ export default function EditProfile() {
         description: "Your password has been successfully updated.",
       });
       passwordForm.reset();
+      // Redirect back to settings page after successful update
+      setTimeout(() => setLocation("/settings"), 1500);
     },
     onError: (error: any) => {
       toast({
@@ -97,10 +64,6 @@ export default function EditProfile() {
     },
   });
 
-  const onEmailSubmit = (data: EmailFormData) => {
-    updateEmailMutation.mutate(data);
-  };
-
   const onPasswordSubmit = (data: PasswordFormData) => {
     updatePasswordMutation.mutate(data);
   };
@@ -108,55 +71,25 @@ export default function EditProfile() {
   return (
     <div className="container max-w-2xl mx-auto py-10">
       <div className="space-y-6">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight">Edit Profile</h1>
-          <p className="text-muted-foreground">
-            Update your account settings and credentials.
-          </p>
+        {/* Back button and header */}
+        <div className="flex items-center space-x-4">
+          <Link href="/settings">
+            <Button variant="ghost" size="sm" data-testid="button-back">
+              <ArrowLeft className="h-4 w-4 mr-2" />
+              Back to Settings
+            </Button>
+          </Link>
         </div>
 
-        {/* Email Update Card */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Email Address</CardTitle>
-            <CardDescription>
-              Update your email address for account notifications and login.
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <Form {...emailForm}>
-              <form onSubmit={emailForm.handleSubmit(onEmailSubmit)} className="space-y-4">
-                <FormField
-                  control={emailForm.control}
-                  name="email"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Email Address</FormLabel>
-                      <FormControl>
-                        <Input 
-                          {...field} 
-                          type="email" 
-                          placeholder="Enter your email"
-                          data-testid="input-email"
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <Button 
-                  type="submit" 
-                  disabled={updateEmailMutation.isPending}
-                  data-testid="button-update-email"
-                >
-                  {updateEmailMutation.isPending ? "Updating..." : "Update Email"}
-                </Button>
-              </form>
-            </Form>
-          </CardContent>
-        </Card>
-
-        <Separator />
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight flex items-center gap-2">
+            <Lock className="h-8 w-8" />
+            Change Password
+          </h1>
+          <p className="text-muted-foreground">
+            Change your password to keep your account secure.
+          </p>
+        </div>
 
         {/* Password Update Card */}
         <Card>
@@ -180,7 +113,7 @@ export default function EditProfile() {
                           <Input 
                             {...field} 
                             type={showCurrentPassword ? "text" : "password"}
-                            placeholder="Enter current password"
+                            placeholder="Enter your current password"
                             data-testid="input-current-password"
                           />
                           <Button
@@ -203,7 +136,7 @@ export default function EditProfile() {
                     </FormItem>
                   )}
                 />
-                
+
                 <FormField
                   control={passwordForm.control}
                   name="newPassword"
@@ -215,7 +148,7 @@ export default function EditProfile() {
                           <Input 
                             {...field} 
                             type={showNewPassword ? "text" : "password"}
-                            placeholder="Enter new password"
+                            placeholder="Enter your new password"
                             data-testid="input-new-password"
                           />
                           <Button
@@ -250,7 +183,7 @@ export default function EditProfile() {
                           <Input 
                             {...field} 
                             type={showConfirmPassword ? "text" : "password"}
-                            placeholder="Confirm new password"
+                            placeholder="Confirm your new password"
                             data-testid="input-confirm-password"
                           />
                           <Button

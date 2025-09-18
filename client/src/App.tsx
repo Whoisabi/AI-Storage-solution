@@ -15,6 +15,8 @@ import Shared from "@/pages/shared";
 import Analytics from "@/pages/analytics";
 import Settings from "@/pages/settings";
 import EditProfile from "@/pages/edit-profile";
+import ChangePassword from "@/pages/change-password";
+import ChangeEmail from "@/pages/change-email";
 import Help from "@/pages/help";
 import About from "@/pages/about";
 
@@ -52,6 +54,8 @@ function Router() {
           <Route path="/analytics" component={Analytics} />
           <Route path="/settings" component={Settings} />
           <Route path="/settings/edit-profile" component={EditProfile} />
+          <Route path="/settings/change-password" component={ChangePassword} />
+          <Route path="/settings/change-email" component={ChangeEmail} />
           <Route path="/settings/help" component={Help} />
           <Route path="/settings/about" component={About} />
         </>

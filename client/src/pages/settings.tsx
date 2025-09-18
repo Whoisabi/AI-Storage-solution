@@ -26,30 +26,60 @@ export default function Settings() {
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {/* Edit Profile Card */}
+          {/* Change Email Card */}
           <Card className="hover:shadow-md transition-shadow cursor-pointer group">
-            <Link href="/settings/edit-profile" className="block">
+            <Link href="/settings/change-email" className="block">
               <CardHeader>
                 <CardTitle className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
-                    <User className="h-5 w-5 text-primary" />
-                    Edit Profile
+                    <Mail className="h-5 w-5 text-primary" />
+                    Change Email
                   </div>
                   <ChevronRight className="h-4 w-4 text-muted-foreground group-hover:text-primary transition-colors" />
                 </CardTitle>
                 <CardDescription>
-                  Update your account information and credentials
+                  Update your email address for account notifications
                 </CardDescription>
               </CardHeader>
               <CardContent>
                 <div className="space-y-2">
                   <div className="flex items-center gap-2 text-sm text-muted-foreground">
                     <Mail className="h-4 w-4" />
-                    Change email address
+                    Change your login email address
                   </div>
                   <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                    <span className="w-4 h-4 flex items-center justify-center text-xs">⚠️</span>
+                    Includes email confirmation
+                  </div>
+                </div>
+              </CardContent>
+            </Link>
+          </Card>
+
+          {/* Change Password Card */}
+          <Card className="hover:shadow-md transition-shadow cursor-pointer group">
+            <Link href="/settings/change-password" className="block">
+              <CardHeader>
+                <CardTitle className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <Lock className="h-5 w-5 text-primary" />
+                    Change Password
+                  </div>
+                  <ChevronRight className="h-4 w-4 text-muted-foreground group-hover:text-primary transition-colors" />
+                </CardTitle>
+                <CardDescription>
+                  Update your password to keep your account secure
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-2">
+                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
                     <Lock className="h-4 w-4" />
-                    Update password
+                    Change your account password
+                  </div>
+                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                    <span className="w-4 h-4 flex items-center justify-center text-xs">🔐</span>
+                    Secure password verification
                   </div>
                 </div>
               </CardContent>
