@@ -10,7 +10,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { queryClient } from "@/lib/queryClient";
@@ -410,6 +410,9 @@ export default function EnhancedDashboard() {
         <DialogContent className="sm:max-w-[425px]" data-testid="modal-s3-connection">
           <DialogHeader>
             <DialogTitle>Connect to S3</DialogTitle>
+            <DialogDescription>
+              Enter your AWS credentials to connect to your S3 buckets and access your files.
+            </DialogDescription>
           </DialogHeader>
           
           <div className="space-y-4 py-4">
