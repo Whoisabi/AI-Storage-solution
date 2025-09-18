@@ -1,7 +1,7 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-import { setupAuth, isAuthenticated } from "./replitAuth";
+import { setupAuth, isAuthenticated } from "./auth";
 import { s3Service } from "./services/s3Service";
 import { 
   storeS3CredentialsInSession, 
@@ -33,9 +33,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Auth routes
   app.get('/api/auth/user', isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
-      const user = await storage.getUser(userId);
-      res.json(user);
+      res.json(req.user);
     } catch (error) {
       console.error("Error fetching user:", error);
       res.status(500).json({ message: "Failed to fetch user" });
@@ -49,7 +47,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "No file uploaded" });
       }
 
-      const userId = req.user.claims.sub;
+      const userId = req.user.id;
       const { buffer, originalname, mimetype, size } = req.file;
       const folderId = req.body.folderId ? parseInt(req.body.folderId) : undefined;
 
@@ -94,7 +92,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Get user files and folders
   app.get('/api/files', isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user.id;
       const folderId = req.query.folderId ? parseInt(req.query.folderId as string) : undefined;
       const files = await storage.getFilesByUserId(userId, folderId);
       const folders = await storage.getFoldersByUserId(userId, folderId);
@@ -108,7 +106,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Create folder
   app.post('/api/folders', isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user.id;
       const folderData = insertFolderSchema.parse({
         ...req.body,
         userId,
@@ -129,7 +127,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post('/api/folders/:id/share', isAuthenticated, async (req: any, res) => {
     try {
       const folderId = parseInt(req.params.id);
-      const userId = req.user.claims.sub;
+      const userId = req.user.id;
       const { isShared } = shareFolderSchema.parse(req.body);
       
       const folder = await storage.getFolderById(folderId);
@@ -164,7 +162,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.delete('/api/folders/:id', isAuthenticated, async (req: any, res) => {
     try {
       const folderId = parseInt(req.params.id);
-      const userId = req.user.claims.sub;
+      const userId = req.user.id;
       
       const folder = await storage.getFolderById(folderId);
       if (!folder || folder.userId !== userId) {
@@ -183,7 +181,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get('/api/files/:id/download', isAuthenticated, async (req: any, res) => {
     try {
       const fileId = parseInt(req.params.id);
-      const userId = req.user.claims.sub;
+      const userId = req.user.id;
       
       const file = await storage.getFileById(fileId);
       if (!file || file.userId !== userId) {
@@ -202,7 +200,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post('/api/files/:id/share', isAuthenticated, async (req: any, res) => {
     try {
       const fileId = parseInt(req.params.id);
-      const userId = req.user.claims.sub;
+      const userId = req.user.id;
       const { isShared } = shareFileSchema.parse(req.body);
       
       const file = await storage.getFileById(fileId);
@@ -290,7 +288,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.delete('/api/files/:id', isAuthenticated, async (req: any, res) => {
     try {
       const fileId = parseInt(req.params.id);
-      const userId = req.user.claims.sub;
+      const userId = req.user.id;
       
       const file = await storage.getFileById(fileId);
       if (!file || file.userId !== userId) {
@@ -313,7 +311,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Get storage statistics
   app.get('/api/stats', isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user.id;
       const files = await storage.getFilesByUserId(userId);
       const folders = await storage.getFoldersByUserId(userId);
       
@@ -381,7 +379,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Analytics endpoint with comprehensive storage insights
   app.get('/api/analytics', isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user.id;
       const refresh = req.query.refresh === 'true';
       const includeExternal = req.query.includeExternal === 'true';
       
@@ -611,7 +609,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const buckets = await s3Service.validateCredentials(credentials);
       
       // Store credentials in session
-      const userId = req.user.claims.sub;
+      const userId = req.user.id;
       storeS3CredentialsInSession(userId, credentials);
       
       res.json({ 
@@ -631,7 +629,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Disconnect from user's AWS account
   app.post('/api/s3/disconnect', isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user.id;
       clearS3CredentialsFromSession(userId);
       res.json({ 
         success: true, 
@@ -646,7 +644,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // List S3 buckets
   app.get('/api/s3/buckets', isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user.id;
       const credentials = getS3CredentialsFromSession(userId);
       
       if (!credentials) {
@@ -668,7 +666,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get('/api/s3/objects', isAuthenticated, async (req: any, res) => {
     try {
       const { bucket, prefix = '', token } = req.query;
-      const userId = req.user.claims.sub;
+      const userId = req.user.id;
       const credentials = getS3CredentialsFromSession(userId);
       
       if (!credentials) {
@@ -704,7 +702,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       const { bucket, prefix = '' } = req.body;
-      const userId = req.user.claims.sub;
+      const userId = req.user.id;
       const credentials = getS3CredentialsFromSession(userId);
       
       if (!credentials) {
@@ -746,7 +744,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get('/api/s3/download', isAuthenticated, async (req: any, res) => {
     try {
       const { bucket, key } = req.query;
-      const userId = req.user.claims.sub;
+      const userId = req.user.id;
       const credentials = getS3CredentialsFromSession(userId);
       
       if (!credentials) {
@@ -777,7 +775,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.delete('/api/s3/objects', isAuthenticated, async (req: any, res) => {
     try {
       const { bucket, keys } = req.body;
-      const userId = req.user.claims.sub;
+      const userId = req.user.id;
       const credentials = getS3CredentialsFromSession(userId);
       
       if (!credentials) {
@@ -809,7 +807,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Check S3 connection status
   app.get('/api/s3/status', isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user.id;
       const isConnected = hasS3CredentialsInSession(userId);
       const credentials = getS3CredentialsFromSession(userId);
       
