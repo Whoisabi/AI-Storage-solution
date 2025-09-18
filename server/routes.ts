@@ -10,9 +10,28 @@ import {
   hasS3CredentialsInSession 
 } from "./services/sessionCredentials";
 import multer from "multer";
-import { insertFileSchema, shareFileSchema, insertFolderSchema, shareFolderSchema } from "@shared/schema";
+import { insertFileSchema, shareFileSchema, insertFolderSchema, shareFolderSchema, loginSchema } from "@shared/schema";
+import { z } from "zod";
 import { nanoid } from "nanoid";
 import { ZodError } from "zod";
+
+// Validation schemas for API endpoints
+const updateEmailSchema = z.object({
+  email: z.string().email("Please enter a valid email address"),
+});
+
+const updatePasswordSchema = z.object({
+  currentPassword: z.string().min(1, "Current password is required"),
+  newPassword: z.string().min(8, "Password must be at least 8 characters long"),
+});
+
+const contactFormSchema = z.object({
+  name: z.string().min(1, "Name is required"),
+  email: z.string().email("Please enter a valid email address"),
+  subject: z.string().min(1, "Subject is required"),
+  category: z.string().min(1, "Please select a category"),
+  message: z.string().min(10, "Message must be at least 10 characters long"),
+});
 
 const upload = multer({
   storage: multer.memoryStorage(),
@@ -37,6 +56,98 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error fetching user:", error);
       res.status(500).json({ message: "Failed to fetch user" });
+    }
+  });
+
+  // Update email endpoint
+  app.post('/api/auth/update-email', isAuthenticated, async (req: any, res) => {
+    try {
+      const { email } = updateEmailSchema.parse(req.body);
+      const userId = req.user.id;
+      
+      const normalizedEmail = email.toLowerCase().trim();
+      
+      // Check if email is already in use
+      const existingUser = await storage.getUserByEmail(normalizedEmail);
+      if (existingUser && existingUser.id !== userId) {
+        return res.status(400).json({ message: "Email is already in use" });
+      }
+      
+      // Update user email
+      await storage.updateUserEmail(userId, normalizedEmail);
+      
+      res.json({ success: true, message: "Email updated successfully" });
+    } catch (error) {
+      console.error("Error updating email:", error);
+      if (error instanceof ZodError) {
+        return res.status(400).json({ message: "Invalid input", errors: error.errors });
+      }
+      res.status(500).json({ message: "Failed to update email" });
+    }
+  });
+
+  // Update password endpoint
+  app.post('/api/auth/update-password', isAuthenticated, async (req: any, res) => {
+    try {
+      const { currentPassword, newPassword } = updatePasswordSchema.parse(req.body);
+      const userId = req.user.id;
+      
+      // Verify current password
+      const user = await storage.getUser(userId);
+      if (!user) {
+        return res.status(404).json({ message: "User not found" });
+      }
+      
+      if (!user.password) {
+        return res.status(400).json({ message: "Password not set for this account" });
+      }
+      
+      const bcrypt = await import('bcryptjs');
+      const isValidPassword = await bcrypt.compare(currentPassword, user.password);
+      if (!isValidPassword) {
+        return res.status(400).json({ message: "Current password is incorrect" });
+      }
+      
+      // Hash and update new password
+      const hashedPassword = await bcrypt.hash(newPassword, 12);
+      await storage.updateUserPassword(userId, hashedPassword);
+      
+      res.json({ success: true, message: "Password updated successfully" });
+    } catch (error) {
+      console.error("Error updating password:", error);
+      if (error instanceof ZodError) {
+        return res.status(400).json({ message: "Invalid input", errors: error.errors });
+      }
+      res.status(500).json({ message: "Failed to update password" });
+    }
+  });
+
+  // Contact form endpoint
+  app.post('/api/contact', async (req, res) => {
+    try {
+      const { name, email, subject, category, message } = contactFormSchema.parse(req.body);
+      
+      // Here you would typically send an email or save to a support system
+      // For now, we'll just log it and return success
+      console.log('Contact form submission:', {
+        name,
+        email: email.toLowerCase().trim(),
+        subject,
+        category,
+        message,
+        timestamp: new Date().toISOString()
+      });
+      
+      res.json({ 
+        success: true, 
+        message: "Your message has been sent successfully. We'll get back to you soon!" 
+      });
+    } catch (error) {
+      console.error("Error processing contact form:", error);
+      if (error instanceof ZodError) {
+        return res.status(400).json({ message: "Invalid input", errors: error.errors });
+      }
+      res.status(500).json({ message: "Failed to send message" });
     }
   });
 

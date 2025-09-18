@@ -19,6 +19,8 @@ export interface IStorage {
   getUserByEmail(email: string): Promise<User | undefined>;
   createUser(user: UpsertUser): Promise<User>;
   upsertUser(user: UpsertUser): Promise<User>;
+  updateUserEmail(id: string, email: string): Promise<void>;
+  updateUserPassword(id: string, password: string): Promise<void>;
   
   // File operations
   createFile(file: InsertFile): Promise<File>;
@@ -72,6 +74,26 @@ export class DatabaseStorage implements IStorage {
       })
       .returning();
     return user;
+  }
+
+  async updateUserEmail(id: string, email: string): Promise<void> {
+    await db
+      .update(users)
+      .set({
+        email,
+        updatedAt: new Date(),
+      })
+      .where(eq(users.id, id));
+  }
+
+  async updateUserPassword(id: string, password: string): Promise<void> {
+    await db
+      .update(users)
+      .set({
+        password,
+        updatedAt: new Date(),
+      })
+      .where(eq(users.id, id));
   }
 
   // File operations

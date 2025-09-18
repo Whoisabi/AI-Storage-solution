@@ -99,10 +99,12 @@ export default function Sidebar() {
             </Link>
           </li>
           <li>
-            <a href="#" className="flex items-center space-x-3 p-3 rounded-lg text-gray-700 hover:bg-gray-100 transition-colors">
+            <Link href="/settings" className={`flex items-center space-x-3 p-3 rounded-lg transition-colors ${
+              location === "/settings" || location.startsWith("/settings/") ? "bg-primary text-white" : "text-gray-700 hover:bg-gray-100"
+            }`}>
               <Settings className="h-5 w-5" />
               <span>Settings</span>
-            </a>
+            </Link>
           </li>
         </ul>
         

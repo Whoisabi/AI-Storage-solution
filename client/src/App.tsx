@@ -13,6 +13,10 @@ import Dashboard from "@/pages/enhanced-dashboard";
 import MyFiles from "@/pages/my-files";
 import Shared from "@/pages/shared";
 import Analytics from "@/pages/analytics";
+import Settings from "@/pages/settings";
+import EditProfile from "@/pages/edit-profile";
+import Help from "@/pages/help";
+import About from "@/pages/about";
 
 function Router() {
   const { isAuthenticated, isLoading } = useAuth();
@@ -46,6 +50,10 @@ function Router() {
           <Route path="/files" component={MyFiles} />
           <Route path="/shared" component={Shared} />
           <Route path="/analytics" component={Analytics} />
+          <Route path="/settings" component={Settings} />
+          <Route path="/settings/edit-profile" component={EditProfile} />
+          <Route path="/settings/help" component={Help} />
+          <Route path="/settings/about" component={About} />
         </>
       )}
       <Route component={NotFound} />
