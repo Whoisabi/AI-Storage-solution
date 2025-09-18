@@ -223,7 +223,7 @@ export default function FileTable({ searchQuery = '' }: FileTableProps) {
         method: 'DELETE',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
-        body: JSON.stringify({ bucket, key }),
+        body: JSON.stringify({ bucket, keys: [key] }),
       });
 
       if (!response.ok) {
@@ -267,7 +267,7 @@ export default function FileTable({ searchQuery = '' }: FileTableProps) {
     mutationFn: async () => {
       const deleteRequests = [];
       
-      // Create wrapped promises that reject on HTTP errors
+      // Create wrapped promises that reject on HTTP errors for files
       for (const fileId of selectedFiles) {
         deleteRequests.push(
           fetch(`/api/files/${fileId}`, {
@@ -283,20 +283,22 @@ export default function FileTable({ searchQuery = '' }: FileTableProps) {
         );
       }
       
-      for (const objectKey of selectedS3Objects) {
+      // For S3 objects, consolidate into a single request
+      if (selectedS3Objects.length > 0) {
         const bucket = currentLocation.bucketName || currentLocation.name;
         deleteRequests.push(
           fetch('/api/s3/objects', {
             method: 'DELETE',
             headers: { 'Content-Type': 'application/json' },
             credentials: 'include',
-            body: JSON.stringify({ bucket, key: objectKey }),
+            body: JSON.stringify({ bucket, keys: selectedS3Objects }),
           }).then(async (response) => {
             if (!response.ok) {
               const errorText = await response.text();
-              throw new Error(`S3 object ${objectKey}: ${response.status} ${errorText}`);
+              throw new Error(`S3 objects: ${response.status} ${errorText}`);
             }
-            return { type: 's3object', key: objectKey, success: true };
+            const result = await response.json();
+            return { type: 's3objects', keys: selectedS3Objects, success: true, result };
           })
         );
       }
@@ -314,8 +316,15 @@ export default function FileTable({ searchQuery = '' }: FileTableProps) {
           const item = result.value;
           if (item.type === 'file' && 'id' in item) {
             successfulFiles.push(item.id);
-          } else if (item.type === 's3object' && 'key' in item) {
-            successfulS3Objects.push(item.key);
+          } else if (item.type === 's3objects' && 'keys' in item) {
+            // For consolidated S3 delete, get successfully deleted keys from the result
+            const deleteResult = item.result;
+            if (deleteResult && deleteResult.deleted) {
+              successfulS3Objects.push(...deleteResult.deleted);
+            } else {
+              // Fallback: assume all were successful if no detailed result
+              successfulS3Objects.push(...item.keys);
+            }
           }
         }
       });
