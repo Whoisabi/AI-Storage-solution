@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
 import { useNavigation } from "@/hooks/useNavigation";
@@ -187,13 +187,15 @@ export default function FileTable({ searchQuery = '' }: FileTableProps) {
 
       return response.json();
     },
-    onSuccess: () => {
+    onSuccess: (_, fileId) => {
       queryClient.invalidateQueries({ queryKey: ['/api/files'] });
       queryClient.invalidateQueries({ queryKey: ['/api/stats'] });
       toast({
         title: "File Deleted",
         description: "File has been successfully deleted",
       });
+      // Remove the deleted file from selection
+      setSelectedFiles(prev => prev.filter(id => id !== fileId));
     },
     onError: (error) => {
       if (isUnauthorizedError(error)) {
@@ -231,14 +233,15 @@ export default function FileTable({ searchQuery = '' }: FileTableProps) {
 
       return response.json();
     },
-    onSuccess: () => {
+    onSuccess: (_, { key }) => {
       queryClient.invalidateQueries({ queryKey: ['/api/s3/objects'] });
       queryClient.invalidateQueries({ queryKey: ['/api/stats'] });
       toast({
         title: "S3 Object Deleted",
         description: "S3 object has been successfully deleted",
       });
-      setSelectedS3Objects([]);
+      // Only remove the deleted key from selection, preserve other selections
+      setSelectedS3Objects(prev => prev.filter(selectedKey => selectedKey !== key));
     },
     onError: (error) => {
       if (isUnauthorizedError(error)) {
@@ -262,58 +265,121 @@ export default function FileTable({ searchQuery = '' }: FileTableProps) {
 
   const bulkDeleteMutation = useMutation({
     mutationFn: async () => {
-      const promises = [];
+      const deleteRequests = [];
       
-      // Delete selected regular files
+      // Create wrapped promises that reject on HTTP errors
       for (const fileId of selectedFiles) {
-        promises.push(
+        deleteRequests.push(
           fetch(`/api/files/${fileId}`, {
             method: 'DELETE',
             credentials: 'include',
+          }).then(async (response) => {
+            if (!response.ok) {
+              const errorText = await response.text();
+              throw new Error(`File ${fileId}: ${response.status} ${errorText}`);
+            }
+            return { type: 'file', id: fileId, success: true };
           })
         );
       }
       
-      // Delete selected S3 objects
       for (const objectKey of selectedS3Objects) {
         const bucket = currentLocation.bucketName || currentLocation.name;
-        promises.push(
+        deleteRequests.push(
           fetch('/api/s3/objects', {
             method: 'DELETE',
             headers: { 'Content-Type': 'application/json' },
             credentials: 'include',
             body: JSON.stringify({ bucket, key: objectKey }),
+          }).then(async (response) => {
+            if (!response.ok) {
+              const errorText = await response.text();
+              throw new Error(`S3 object ${objectKey}: ${response.status} ${errorText}`);
+            }
+            return { type: 's3object', key: objectKey, success: true };
           })
         );
       }
       
-      const results = await Promise.allSettled(promises);
+      const results = await Promise.allSettled(deleteRequests);
+      const successes = results.filter(result => result.status === 'fulfilled');
       const failures = results.filter(result => result.status === 'rejected');
       
+      // Get successful items for removal from selection
+      const successfulFiles: number[] = [];
+      const successfulS3Objects: string[] = [];
+      
+      successes.forEach(result => {
+        if (result.status === 'fulfilled') {
+          const item = result.value;
+          if (item.type === 'file' && 'id' in item) {
+            successfulFiles.push(item.id);
+          } else if (item.type === 's3object' && 'key' in item) {
+            successfulS3Objects.push(item.key);
+          }
+        }
+      });
+      
+      // If there are failures, include success info in the error for partial handling
       if (failures.length > 0) {
-        throw new Error(`${failures.length} items failed to delete`);
+        const errorMessages = failures.map(failure => 
+          failure.status === 'rejected' ? failure.reason?.message || 'Unknown error' : ''
+        ).join('; ');
+        const error = new Error(`${failures.length} of ${results.length} items failed: ${errorMessages}`);
+        (error as any).partialSuccess = { successfulFiles, successfulS3Objects, successCount: successes.length, failureCount: failures.length };
+        throw error;
       }
       
-      return results;
+      return { successfulFiles, successfulS3Objects, successCount: successes.length, failureCount: 0 };
     },
-    onSuccess: () => {
+    onSuccess: (result) => {
       queryClient.invalidateQueries({ queryKey: ['/api/files'] });
       queryClient.invalidateQueries({ queryKey: ['/api/s3/objects'] });
       queryClient.invalidateQueries({ queryKey: ['/api/stats'] });
-      const totalDeleted = selectedFiles.length + selectedS3Objects.length;
       toast({
         title: "Items Deleted",
-        description: `${totalDeleted} items have been successfully deleted`,
+        description: `${result.successCount} items have been successfully deleted`,
       });
-      setSelectedFiles([]);
-      setSelectedS3Objects([]);
+      // Remove only successful deletions from selection
+      setSelectedFiles(prev => prev.filter(id => !result.successfulFiles.includes(id)));
+      setSelectedS3Objects(prev => prev.filter(key => !result.successfulS3Objects.includes(key)));
     },
-    onError: (error) => {
-      toast({
-        title: "Bulk Delete Failed",
-        description: error.message,
-        variant: "destructive",
-      });
+    onError: (error: any) => {
+      // Always invalidate queries even on error to reflect any successful deletions
+      queryClient.invalidateQueries({ queryKey: ['/api/files'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/s3/objects'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/stats'] });
+      
+      if (isUnauthorizedError(error)) {
+        toast({
+          title: "Unauthorized",
+          description: "You are logged out. Logging in again...",
+          variant: "destructive",
+        });
+        setTimeout(() => {
+          window.location.href = "/api/login";
+        }, 500);
+        return;
+      }
+      
+      // Handle partial success case
+      if (error.partialSuccess) {
+        const { successfulFiles, successfulS3Objects, successCount, failureCount } = error.partialSuccess;
+        // Remove successful deletions from selection
+        setSelectedFiles(prev => prev.filter(id => !successfulFiles.includes(id)));
+        setSelectedS3Objects(prev => prev.filter(key => !successfulS3Objects.includes(key)));
+        toast({
+          title: "Partial Delete Completed",
+          description: `${successCount} items deleted successfully, ${failureCount} failed. ${error.message}`,
+          variant: "destructive",
+        });
+      } else {
+        toast({
+          title: "Bulk Delete Failed",
+          description: error.message,
+          variant: "destructive",
+        });
+      }
     },
   });
 
@@ -337,8 +403,21 @@ export default function FileTable({ searchQuery = '' }: FileTableProps) {
     }
   };
 
-  const handleSelectAll = (checked: boolean) => {
-    if (checked) {
+  // Clear selections when navigating or searching to prevent stale selections
+  useEffect(() => {
+    setSelectedFiles([]);
+    setSelectedS3Objects([]);
+  }, [currentLocation.bucketName, currentLocation.name, currentLocation.prefix, searchQuery]);
+
+  const totalSelected = selectedFiles.length + selectedS3Objects.length;
+  const totalAvailable = filteredFiles.length + filteredS3Objects.length;
+  const isSelectAllChecked = totalAvailable > 0 && totalSelected === totalAvailable;
+  const isSelectAllIndeterminate = totalSelected > 0 && totalSelected < totalAvailable;
+
+
+  const handleSelectAll = (checked: boolean | "indeterminate") => {
+    const shouldSelect = Boolean(checked);
+    if (shouldSelect) {
       setSelectedFiles(filteredFiles.map(file => file.id));
       setSelectedS3Objects(filteredS3Objects.map(obj => obj.key));
     } else {
@@ -347,16 +426,18 @@ export default function FileTable({ searchQuery = '' }: FileTableProps) {
     }
   };
 
-  const handleSelectFile = (fileId: number, checked: boolean) => {
-    if (checked) {
+  const handleSelectFile = (fileId: number, checked: boolean | "indeterminate") => {
+    const shouldSelect = Boolean(checked);
+    if (shouldSelect) {
       setSelectedFiles(prev => [...prev, fileId]);
     } else {
       setSelectedFiles(prev => prev.filter(id => id !== fileId));
     }
   };
 
-  const handleSelectS3Object = (objectKey: string, checked: boolean) => {
-    if (checked) {
+  const handleSelectS3Object = (objectKey: string, checked: boolean | "indeterminate") => {
+    const shouldSelect = Boolean(checked);
+    if (shouldSelect) {
       setSelectedS3Objects(prev => [...prev, objectKey]);
     } else {
       setSelectedS3Objects(prev => prev.filter(key => key !== objectKey));
@@ -447,9 +528,7 @@ export default function FileTable({ searchQuery = '' }: FileTableProps) {
             <TableRow>
               <TableHead className="w-12">
                 <Checkbox
-                  checked={(selectedFiles.length === filteredFiles.length && filteredFiles.length > 0) && 
-                          (selectedS3Objects.length === filteredS3Objects.length && filteredS3Objects.length > 0) &&
-                          (filteredFiles.length + filteredS3Objects.length > 0)}
+                  checked={isSelectAllIndeterminate ? 'indeterminate' : isSelectAllChecked}
                   onCheckedChange={handleSelectAll}
                   data-testid="checkbox-select-all"
                 />
@@ -612,7 +691,7 @@ export default function FileTable({ searchQuery = '' }: FileTableProps) {
                 <TableCell>
                   <Checkbox
                     checked={selectedS3Objects.includes(object.key)}
-                    onCheckedChange={(checked) => handleSelectS3Object(object.key, checked as boolean)}
+                    onCheckedChange={(checked) => handleSelectS3Object(object.key, checked)}
                     data-testid={`checkbox-s3-object-${object.key}`}
                   />
                 </TableCell>
@@ -775,7 +854,7 @@ export default function FileTable({ searchQuery = '' }: FileTableProps) {
                 <TableCell>
                   <Checkbox
                     checked={selectedFiles.includes(file.id)}
-                    onCheckedChange={(checked) => handleSelectFile(file.id, checked as boolean)}
+                    onCheckedChange={(checked) => handleSelectFile(file.id, checked)}
                   />
                 </TableCell>
                 <TableCell>
