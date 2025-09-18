@@ -8,6 +8,9 @@ import memoize from "memoizee";
 import connectPg from "connect-pg-simple";
 import { storage } from "./storage";
 
+// Map to track ongoing token refresh operations to prevent race conditions
+const refreshPromises = new Map<string, Promise<boolean>>();
+
 if (!process.env.REPLIT_DOMAINS) {
   throw new Error("Environment variable REPLIT_DOMAINS not provided");
 }
@@ -127,6 +130,48 @@ export async function setupAuth(app: Express) {
   });
 }
 
+/**
+ * Performs token refresh with race condition protection
+ * Only one refresh operation per session is allowed at a time
+ */
+async function performTokenRefresh(sessionId: string, user: any): Promise<any | null> {
+  const refreshToken = user.refresh_token;
+  if (!refreshToken) {
+    return null;
+  }
+
+  try {
+    const config = await getOidcConfig();
+    const tokenResponse = await client.refreshTokenGrant(config, refreshToken);
+    updateUserSession(user, tokenResponse);
+    
+    // Return updated user data so concurrent requests can use it
+    return {
+      access_token: user.access_token,
+      refresh_token: user.refresh_token,
+      expires_at: user.expires_at,
+      claims: user.claims
+    };
+  } catch (error) {
+    console.error("Token refresh failed:", error);
+    return null;
+  }
+}
+
+/**
+ * Clears user session and responds with 401
+ */
+function clearSessionAndRespond(req: any, res: any, message = "Unauthorized") {
+  req.logout((err: any) => {
+    if (err) {
+      console.error("Error during logout:", err);
+    }
+    req.session?.destroy(() => {
+      res.clearCookie("connect.sid").status(401).json({ message });
+    });
+  });
+}
+
 export const isAuthenticated: RequestHandler = async (req, res, next) => {
   const user = req.user as any;
 
@@ -141,33 +186,58 @@ export const isAuthenticated: RequestHandler = async (req, res, next) => {
 
   const refreshToken = user.refresh_token;
   if (!refreshToken) {
-    // Clear the session when no refresh token is available
-    req.logout((err) => {
-      if (err) {
-        console.error("Error during logout when no refresh token found:", err);
-      }
-      req.session?.destroy(() => {
-        res.clearCookie("connect.sid").status(401).json({ message: "Unauthorized" });
-      });
-    });
+    clearSessionAndRespond(req, res, "No refresh token available");
     return;
   }
 
-  try {
-    const config = await getOidcConfig();
-    const tokenResponse = await client.refreshTokenGrant(config, refreshToken);
-    updateUserSession(user, tokenResponse);
-    return next();
-  } catch (error) {
-    // Clear the session when token refresh fails to prevent stuck auth state
-    req.logout((err) => {
-      if (err) {
-        console.error("Error during logout after failed token refresh:", err);
-      }
-      req.session?.destroy(() => {
-        res.clearCookie("connect.sid").status(401).json({ message: "Unauthorized" });
-      });
+  const sessionId = req.sessionID || req.session?.id;
+  if (!sessionId) {
+    // No session ID available - cannot safely implement locking
+    return res.status(401).json({ message: "Invalid session" });
+  }
+  
+  // Check if there's already a refresh operation in progress for this session
+  let refreshPromise = refreshPromises.get(sessionId);
+  
+  if (!refreshPromise) {
+    // Create new refresh operation and store the promise
+    refreshPromise = performTokenRefresh(sessionId, user).finally(() => {
+      // Clean up the promise when done (success or failure)
+      refreshPromises.delete(sessionId);
     });
+    refreshPromises.set(sessionId, refreshPromise);
+  }
+
+  try {
+    // Wait for the refresh operation to complete
+    const updatedUserData = await refreshPromise;
+    
+    if (updatedUserData) {
+      // Update current request's user object with fresh tokens
+      Object.assign(req.user, updatedUserData);
+      
+      // Persist the updated session data
+      return new Promise<void>((resolve, reject) => {
+        req.session.passport.user = req.user;
+        req.session.save((err) => {
+          if (err) {
+            console.error("Error saving updated session:", err);
+            reject(err);
+          } else {
+            resolve();
+          }
+        });
+      }).then(() => next()).catch((error) => {
+        console.error("Session save error:", error);
+        clearSessionAndRespond(req, res, "Session save error");
+      });
+    } else {
+      clearSessionAndRespond(req, res, "Token refresh failed");
+      return;
+    }
+  } catch (error) {
+    console.error("Error waiting for token refresh:", error);
+    clearSessionAndRespond(req, res, "Token refresh error");
     return;
   }
 };
