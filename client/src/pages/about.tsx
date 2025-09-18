@@ -1,6 +1,7 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Link } from "wouter";
 import { 
   Cloud, 
   Shield, 
@@ -13,21 +14,35 @@ import {
   BarChart3,
   Github,
   Mail,
-  ExternalLink
+  ExternalLink,
+  ArrowLeft
 } from "lucide-react";
 
 export default function About() {
   return (
-    <div className="container max-w-6xl mx-auto py-10">
-      <div className="space-y-12">
-        {/* Hero Section */}
-        <div className="text-center space-y-4">
-          <h1 className="text-4xl font-bold tracking-tight">About AI Storage Solution</h1>
-          <p className="text-xl text-muted-foreground max-w-3xl mx-auto">
-            A modern, secure, and intelligent cloud storage platform built to simplify file management 
-            and collaboration for individuals and teams.
-          </p>
-        </div>
+    <div className="min-h-screen bg-gradient-to-br from-orange-50/50 via-amber-50/30 to-yellow-50/50 dark:from-orange-950/20 dark:via-amber-950/10 dark:to-yellow-950/20">
+      <div className="container max-w-6xl mx-auto py-10">
+        <div className="space-y-12">
+          {/* Back button */}
+          <div className="flex items-center">
+            <Button variant="ghost" size="sm" className="hover:bg-white/80 dark:hover:bg-gray-800/80" asChild data-testid="button-back">
+              <Link href="/settings">
+                <ArrowLeft className="h-4 w-4 mr-2" />
+                Back to Settings
+              </Link>
+            </Button>
+          </div>
+
+          {/* Enhanced Hero Section */}
+          <div className="text-center space-y-6">
+            <h1 className="text-5xl font-bold tracking-tight bg-gradient-to-r from-orange-600 via-amber-600 to-yellow-600 bg-clip-text text-transparent">
+              About AI Storage Solution
+            </h1>
+            <p className="text-xl text-muted-foreground max-w-4xl mx-auto leading-relaxed">
+              A modern, secure, and intelligent cloud storage platform built to simplify file management 
+              and collaboration for individuals and teams. Experience the future of cloud storage today.
+            </p>
+          </div>
 
         {/* Mission Statement */}
         <Card>
@@ -274,6 +289,7 @@ export default function About() {
             </p>
           </CardContent>
         </Card>
+        </div>
       </div>
     </div>
   );

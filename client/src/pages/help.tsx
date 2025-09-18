@@ -10,7 +10,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useToast } from "@/hooks/use-toast";
 import { useMutation } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
-import { Mail, Phone, MessageCircle, HelpCircle } from "lucide-react";
+import { Mail, Phone, MessageCircle, HelpCircle, ArrowLeft } from "lucide-react";
+import { Link } from "wouter";
 
 const contactSchema = z.object({
   name: z.string().min(1, "Name is required"),
@@ -38,10 +39,7 @@ export default function Help() {
 
   const submitContactMutation = useMutation({
     mutationFn: async (data: ContactFormData) => {
-      return apiRequest('/api/contact', {
-        method: 'POST',
-        body: JSON.stringify(data),
-      });
+      return apiRequest('POST', '/api/contact', data);
     },
     onSuccess: () => {
       toast({
@@ -64,53 +62,73 @@ export default function Help() {
   };
 
   return (
-    <div className="container max-w-4xl mx-auto py-10">
-      <div className="space-y-8">
-        <div className="text-center">
-          <h1 className="text-3xl font-bold tracking-tight">Help & Support</h1>
-          <p className="text-muted-foreground mt-2">
-            Need help? We're here to assist you. Send us a message and we'll respond as soon as possible.
-          </p>
-        </div>
+    <div className="min-h-screen bg-gradient-to-br from-green-50/50 via-emerald-50/30 to-blue-50/50 dark:from-green-950/20 dark:via-emerald-950/10 dark:to-blue-950/20">
+      <div className="container max-w-4xl mx-auto py-10">
+        <div className="space-y-8">
+          {/* Back button */}
+          <div className="flex items-center">
+            <Button variant="ghost" size="sm" className="hover:bg-white/80 dark:hover:bg-gray-800/80" asChild data-testid="button-back">
+              <Link href="/settings">
+                <ArrowLeft className="h-4 w-4 mr-2" />
+                Back to Settings
+              </Link>
+            </Button>
+          </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {/* Quick Help Cards */}
-          <Card className="border-dashed">
-            <CardHeader className="text-center">
-              <HelpCircle className="h-8 w-8 mx-auto text-primary" />
-              <CardTitle className="text-lg">Getting Started</CardTitle>
-            </CardHeader>
-            <CardContent className="text-center">
-              <p className="text-sm text-muted-foreground">
-                Learn how to upload, organize, and share your files with our cloud storage solution.
-              </p>
-            </CardContent>
-          </Card>
+          {/* Enhanced header */}
+          <div className="text-center space-y-4">
+            <h1 className="text-4xl font-bold tracking-tight bg-gradient-to-r from-green-600 to-blue-600 bg-clip-text text-transparent">
+              Help & Support
+            </h1>
+            <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
+              Need help? We're here to assist you. Send us a message and we'll respond as soon as possible.
+            </p>
+          </div>
 
-          <Card className="border-dashed">
-            <CardHeader className="text-center">
-              <MessageCircle className="h-8 w-8 mx-auto text-primary" />
-              <CardTitle className="text-lg">Feature Requests</CardTitle>
-            </CardHeader>
-            <CardContent className="text-center">
-              <p className="text-sm text-muted-foreground">
-                Have an idea for a new feature? We'd love to hear your suggestions and feedback.
-              </p>
-            </CardContent>
-          </Card>
+          {/* Enhanced Quick Help Cards */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <Card className="border-0 bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm hover:shadow-xl hover:shadow-blue-500/10 transition-all duration-300">
+              <CardHeader className="text-center space-y-3">
+                <div className="p-3 rounded-full bg-blue-100 dark:bg-blue-900/30 mx-auto w-fit">
+                  <HelpCircle className="h-8 w-8 text-blue-600 dark:text-blue-400" />
+                </div>
+                <CardTitle className="text-lg">Getting Started</CardTitle>
+              </CardHeader>
+              <CardContent className="text-center">
+                <p className="text-sm text-muted-foreground">
+                  Learn how to upload, organize, and share your files with our cloud storage solution.
+                </p>
+              </CardContent>
+            </Card>
 
-          <Card className="border-dashed">
-            <CardHeader className="text-center">
-              <Phone className="h-8 w-8 mx-auto text-primary" />
-              <CardTitle className="text-lg">Technical Support</CardTitle>
-            </CardHeader>
-            <CardContent className="text-center">
-              <p className="text-sm text-muted-foreground">
-                Experiencing technical issues? Our support team is ready to help resolve any problems.
-              </p>
-            </CardContent>
-          </Card>
-        </div>
+            <Card className="border-0 bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm hover:shadow-xl hover:shadow-purple-500/10 transition-all duration-300">
+              <CardHeader className="text-center space-y-3">
+                <div className="p-3 rounded-full bg-purple-100 dark:bg-purple-900/30 mx-auto w-fit">
+                  <MessageCircle className="h-8 w-8 text-purple-600 dark:text-purple-400" />
+                </div>
+                <CardTitle className="text-lg">Feature Requests</CardTitle>
+              </CardHeader>
+              <CardContent className="text-center">
+                <p className="text-sm text-muted-foreground">
+                  Have an idea for a new feature? We'd love to hear your suggestions and feedback.
+                </p>
+              </CardContent>
+            </Card>
+
+            <Card className="border-0 bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm hover:shadow-xl hover:shadow-green-500/10 transition-all duration-300">
+              <CardHeader className="text-center space-y-3">
+                <div className="p-3 rounded-full bg-green-100 dark:bg-green-900/30 mx-auto w-fit">
+                  <Phone className="h-8 w-8 text-green-600 dark:text-green-400" />
+                </div>
+                <CardTitle className="text-lg">Technical Support</CardTitle>
+              </CardHeader>
+              <CardContent className="text-center">
+                <p className="text-sm text-muted-foreground">
+                  Experiencing technical issues? Our support team is ready to help resolve any problems.
+                </p>
+              </CardContent>
+            </Card>
+          </div>
 
         {/* Contact Form */}
         <Card>
@@ -279,6 +297,7 @@ export default function Help() {
             </div>
           </CardContent>
         </Card>
+        </div>
       </div>
     </div>
   );
