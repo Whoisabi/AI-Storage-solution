@@ -51,6 +51,7 @@ interface FileTableProps {
 
 export default function FileTable({ searchQuery = '' }: FileTableProps) {
   const [selectedFiles, setSelectedFiles] = useState<number[]>([]);
+  const [selectedS3Objects, setSelectedS3Objects] = useState<string[]>([]);
   const [shareModalOpen, setShareModalOpen] = useState(false);
   const [selectedFile, setSelectedFile] = useState<FileData | null>(null);
   const { toast } = useToast();
@@ -214,6 +215,108 @@ export default function FileTable({ searchQuery = '' }: FileTableProps) {
     },
   });
 
+  const deleteS3ObjectMutation = useMutation({
+    mutationFn: async ({ bucket, key }: { bucket: string; key: string }) => {
+      const response = await fetch('/api/s3/objects', {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ bucket, key }),
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`${response.status}: ${errorText}`);
+      }
+
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/s3/objects'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/stats'] });
+      toast({
+        title: "S3 Object Deleted",
+        description: "S3 object has been successfully deleted",
+      });
+      setSelectedS3Objects([]);
+    },
+    onError: (error) => {
+      if (isUnauthorizedError(error)) {
+        toast({
+          title: "Unauthorized",
+          description: "You are logged out. Logging in again...",
+          variant: "destructive",
+        });
+        setTimeout(() => {
+          window.location.href = "/api/login";
+        }, 500);
+        return;
+      }
+      toast({
+        title: "Delete Failed",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
+  const bulkDeleteMutation = useMutation({
+    mutationFn: async () => {
+      const promises = [];
+      
+      // Delete selected regular files
+      for (const fileId of selectedFiles) {
+        promises.push(
+          fetch(`/api/files/${fileId}`, {
+            method: 'DELETE',
+            credentials: 'include',
+          })
+        );
+      }
+      
+      // Delete selected S3 objects
+      for (const objectKey of selectedS3Objects) {
+        const bucket = currentLocation.bucketName || currentLocation.name;
+        promises.push(
+          fetch('/api/s3/objects', {
+            method: 'DELETE',
+            headers: { 'Content-Type': 'application/json' },
+            credentials: 'include',
+            body: JSON.stringify({ bucket, key: objectKey }),
+          })
+        );
+      }
+      
+      const results = await Promise.allSettled(promises);
+      const failures = results.filter(result => result.status === 'rejected');
+      
+      if (failures.length > 0) {
+        throw new Error(`${failures.length} items failed to delete`);
+      }
+      
+      return results;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/files'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/s3/objects'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/stats'] });
+      const totalDeleted = selectedFiles.length + selectedS3Objects.length;
+      toast({
+        title: "Items Deleted",
+        description: `${totalDeleted} items have been successfully deleted`,
+      });
+      setSelectedFiles([]);
+      setSelectedS3Objects([]);
+    },
+    onError: (error) => {
+      toast({
+        title: "Bulk Delete Failed",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
   const formatFileSize = (bytes: number) => {
     if (bytes === 0) return '0 Bytes';
     const k = 1024;
@@ -237,8 +340,10 @@ export default function FileTable({ searchQuery = '' }: FileTableProps) {
   const handleSelectAll = (checked: boolean) => {
     if (checked) {
       setSelectedFiles(filteredFiles.map(file => file.id));
+      setSelectedS3Objects(filteredS3Objects.map(obj => obj.key));
     } else {
       setSelectedFiles([]);
+      setSelectedS3Objects([]);
     }
   };
 
@@ -247,6 +352,14 @@ export default function FileTable({ searchQuery = '' }: FileTableProps) {
       setSelectedFiles(prev => [...prev, fileId]);
     } else {
       setSelectedFiles(prev => prev.filter(id => id !== fileId));
+    }
+  };
+
+  const handleSelectS3Object = (objectKey: string, checked: boolean) => {
+    if (checked) {
+      setSelectedS3Objects(prev => [...prev, objectKey]);
+    } else {
+      setSelectedS3Objects(prev => prev.filter(key => key !== objectKey));
     }
   };
 
@@ -262,6 +375,29 @@ export default function FileTable({ searchQuery = '' }: FileTableProps) {
   const handleDelete = (fileId: number) => {
     if (window.confirm('Are you sure you want to delete this file?')) {
       deleteMutation.mutate(fileId);
+    }
+  };
+
+  const handleDeleteS3Object = (objectKey: string) => {
+    const bucket = currentLocation.bucketName || currentLocation.name;
+    if (window.confirm('Are you sure you want to delete this S3 object?')) {
+      deleteS3ObjectMutation.mutate({ bucket: bucket!, key: objectKey });
+    }
+  };
+
+  const handleBulkDelete = () => {
+    const totalSelected = selectedFiles.length + selectedS3Objects.length;
+    if (totalSelected === 0) {
+      toast({
+        title: "No items selected",
+        description: "Please select items to delete",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    if (window.confirm(`Are you sure you want to delete ${totalSelected} selected items?`)) {
+      bulkDeleteMutation.mutate();
     }
   };
 
@@ -285,14 +421,37 @@ export default function FileTable({ searchQuery = '' }: FileTableProps) {
 
   return (
     <>
+      {/* Bulk actions bar */}
+      {(selectedFiles.length > 0 || selectedS3Objects.length > 0) && (
+        <div className="mb-4 p-3 bg-blue-50 rounded-lg border border-blue-200">
+          <div className="flex items-center justify-between">
+            <span className="text-sm text-blue-800">
+              {selectedFiles.length + selectedS3Objects.length} items selected
+            </span>
+            <Button
+              variant="destructive"
+              size="sm"
+              onClick={handleBulkDelete}
+              disabled={bulkDeleteMutation.isPending}
+              data-testid="button-bulk-delete"
+            >
+              <Trash2 className="h-4 w-4 mr-2" />
+              Delete Selected
+            </Button>
+          </div>
+        </div>
+      )}
       <div className="overflow-x-auto">
         <Table>
           <TableHeader>
             <TableRow>
               <TableHead className="w-12">
                 <Checkbox
-                  checked={selectedFiles.length === filteredFiles.length && filteredFiles.length > 0}
+                  checked={(selectedFiles.length === filteredFiles.length && filteredFiles.length > 0) && 
+                          (selectedS3Objects.length === filteredS3Objects.length && filteredS3Objects.length > 0) &&
+                          (filteredFiles.length + filteredS3Objects.length > 0)}
                   onCheckedChange={handleSelectAll}
+                  data-testid="checkbox-select-all"
                 />
               </TableHead>
               <TableHead>Name</TableHead>
@@ -451,7 +610,11 @@ export default function FileTable({ searchQuery = '' }: FileTableProps) {
             {(currentLocation.type === 's3-bucket' || currentLocation.type === 's3-prefix') && filteredS3Objects.map((object, index) => (
               <TableRow key={`s3-object-${object.key}-${index}`} className="hover:bg-gray-50">
                 <TableCell>
-                  <Checkbox disabled />
+                  <Checkbox
+                    checked={selectedS3Objects.includes(object.key)}
+                    onCheckedChange={(checked) => handleSelectS3Object(object.key, checked as boolean)}
+                    data-testid={`checkbox-s3-object-${object.key}`}
+                  />
                 </TableCell>
                 <TableCell>
                   <div className="flex items-center space-x-3">
@@ -489,6 +652,16 @@ export default function FileTable({ searchQuery = '' }: FileTableProps) {
                       data-testid={`button-download-s3-object-${object.key}`}
                     >
                       <Download className="h-4 w-4" />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => handleDeleteS3Object(object.key)}
+                      disabled={deleteS3ObjectMutation.isPending}
+                      className="text-red-600 hover:text-red-700"
+                      data-testid={`button-delete-s3-object-${object.key}`}
+                    >
+                      <Trash2 className="h-4 w-4" />
                     </Button>
                   </div>
                 </TableCell>
