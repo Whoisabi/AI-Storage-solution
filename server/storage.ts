@@ -9,7 +9,7 @@ import {
   type Folder,
   type InsertFolder,
 } from "@shared/schema";
-import { db } from "./db";
+import { db } from "./db-docker";
 import { eq, desc, and, isNull } from "drizzle-orm";
 
 // Interface for storage operations
