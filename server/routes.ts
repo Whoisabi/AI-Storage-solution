@@ -558,6 +558,39 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Delete S3 objects
+  app.delete('/api/s3/objects', isAuthenticated, async (req: any, res) => {
+    try {
+      const { bucket, keys } = req.body;
+      const userId = req.user.claims.sub;
+      const credentials = getS3CredentialsFromSession(userId);
+      
+      if (!credentials) {
+        return res.status(400).json({ message: "No AWS credentials found. Please connect first." });
+      }
+
+      if (!bucket || !keys || !Array.isArray(keys) || keys.length === 0) {
+        return res.status(400).json({ message: "Bucket name and array of keys are required" });
+      }
+
+      // Delete objects from S3
+      const deleteResults = await s3Service.deleteS3Objects(bucket, keys, credentials);
+      
+      res.json({ 
+        success: true, 
+        message: `Successfully deleted ${deleteResults.deleted.length} object(s)`,
+        deleted: deleteResults.deleted,
+        errors: deleteResults.errors
+      });
+    } catch (error: any) {
+      console.error("Error deleting S3 objects:", error);
+      res.status(500).json({ 
+        message: "Failed to delete objects", 
+        error: error.message 
+      });
+    }
+  });
+
   // Check S3 connection status
   app.get('/api/s3/status', isAuthenticated, async (req: any, res) => {
     try {

@@ -1,4 +1,4 @@
-import { S3Client, PutObjectCommand, GetObjectCommand, DeleteObjectCommand, HeadObjectCommand, ListBucketsCommand, ListObjectsV2Command } from "@aws-sdk/client-s3";
+import { S3Client, PutObjectCommand, GetObjectCommand, DeleteObjectCommand, DeleteObjectsCommand, HeadObjectCommand, ListBucketsCommand, ListObjectsV2Command } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import { nanoid } from "nanoid";
 
@@ -209,6 +209,60 @@ export class S3Service {
     });
 
     await client.send(command);
+  }
+
+  // Delete multiple objects from any bucket
+  async deleteS3Objects(
+    bucketName: string,
+    keys: string[],
+    credentials?: S3Credentials
+  ): Promise<{ deleted: string[], errors: any[] }> {
+    const client = this.createS3Client(credentials);
+    
+    // S3 DeleteObjectsCommand can handle up to 1000 objects at once
+    const maxBatchSize = 1000;
+    const deleted: string[] = [];
+    const errors: any[] = [];
+    
+    // Process in batches
+    for (let i = 0; i < keys.length; i += maxBatchSize) {
+      const batch = keys.slice(i, i + maxBatchSize);
+      
+      const command = new DeleteObjectsCommand({
+        Bucket: bucketName,
+        Delete: {
+          Objects: batch.map(key => ({ Key: key })),
+          Quiet: false, // Return info about deleted objects
+        },
+      });
+
+      try {
+        const response = await client.send(command);
+        
+        // Track successfully deleted objects
+        if (response.Deleted) {
+          response.Deleted.forEach(obj => {
+            if (obj.Key) deleted.push(obj.Key);
+          });
+        }
+        
+        // Track any errors
+        if (response.Errors) {
+          errors.push(...response.Errors);
+        }
+      } catch (error) {
+        // If entire batch fails, add all keys to errors
+        batch.forEach(key => {
+          errors.push({
+            Key: key,
+            Code: 'BatchError',
+            Message: error instanceof Error ? error.message : 'Unknown error'
+          });
+        });
+      }
+    }
+    
+    return { deleted, errors };
   }
 
   // Legacy methods for backward compatibility with existing app-managed files
