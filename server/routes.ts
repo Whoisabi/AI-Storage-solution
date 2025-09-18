@@ -374,6 +374,221 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Analytics cache - in-memory per user with TTL
+  const analyticsCache = new Map<string, { data: any; timestamp: number }>();
+  const CACHE_TTL = 10 * 60 * 1000; // 10 minutes
+
+  // Analytics endpoint with comprehensive storage insights
+  app.get('/api/analytics', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const refresh = req.query.refresh === 'true';
+      const includeExternal = req.query.includeExternal === 'true';
+      
+      // Check cache first
+      const cached = analyticsCache.get(userId);
+      if (!refresh && cached && (Date.now() - cached.timestamp) < CACHE_TTL) {
+        return res.json(cached.data);
+      }
+
+      const files = await storage.getFilesByUserId(userId);
+      const folders = await storage.getFoldersByUserId(userId);
+      
+      // Base calculations from app-managed files
+      const totalSize = files.reduce((sum, file) => sum + file.size, 0);
+      const sharedFiles = files.filter(file => file.isShared).length;
+      const sharedFolders = folders.filter(folder => folder.isShared).length;
+      
+      // File type analysis
+      const filesByTypeMap = files.reduce((acc, file) => {
+        let type = 'Other';
+        if (file.mimeType) {
+          if (file.mimeType.startsWith('image/')) type = 'Images';
+          else if (file.mimeType.startsWith('video/')) type = 'Videos';
+          else if (file.mimeType.startsWith('audio/')) type = 'Audio';
+          else if (file.mimeType.includes('pdf')) type = 'PDFs';
+          else if (file.mimeType.includes('text/') || file.mimeType.includes('doc')) type = 'Documents';
+          else if (file.mimeType.includes('zip') || file.mimeType.includes('rar') || file.mimeType.includes('7z')) type = 'Archives';
+        }
+        
+        if (!acc[type]) acc[type] = { count: 0, bytes: 0 };
+        acc[type].count++;
+        acc[type].bytes += file.size;
+        return acc;
+      }, {} as Record<string, { count: number; bytes: number }>);
+
+      // Size distribution analysis
+      const sizeRanges = [
+        { min: 0, max: 10 * 1024, label: '0-10 KB' },
+        { min: 10 * 1024, max: 1024 * 1024, label: '10 KB - 1 MB' },
+        { min: 1024 * 1024, max: 100 * 1024 * 1024, label: '1-100 MB' },
+        { min: 100 * 1024 * 1024, max: 1024 * 1024 * 1024, label: '100 MB - 1 GB' },
+        { min: 1024 * 1024 * 1024, max: Infinity, label: '> 1 GB' }
+      ];
+
+      const sizeDistribution = sizeRanges.map(range => {
+        const filesInRange = files.filter(file => file.size >= range.min && file.size < range.max);
+        return {
+          range: range.label,
+          count: filesInRange.length,
+          bytes: filesInRange.reduce((sum, file) => sum + file.size, 0)
+        };
+      });
+
+      // Bucket usage analysis
+      const bucketUsageMap = files.reduce((acc, file) => {
+        const bucket = file.s3Bucket || 'Unknown';
+        if (!acc[bucket]) acc[bucket] = { count: 0, bytes: 0 };
+        acc[bucket].count++;
+        acc[bucket].bytes += file.size;
+        return acc;
+      }, {} as Record<string, { count: number; bytes: number }>);
+
+      // Top largest files
+      const topFiles = files
+        .sort((a, b) => b.size - a.size)
+        .slice(0, 10)
+        .map(file => ({
+          id: file.id,
+          name: file.name,
+          bytes: file.size,
+          mimeType: file.mimeType
+        }));
+
+      // Recent uploads (last 30 days)
+      const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
+      const recentUploads = files
+        .filter(file => file.uploadedAt && new Date(file.uploadedAt) > thirtyDaysAgo)
+        .sort((a, b) => {
+          const dateA = a.uploadedAt ? new Date(a.uploadedAt).getTime() : 0;
+          const dateB = b.uploadedAt ? new Date(b.uploadedAt).getTime() : 0;
+          return dateB - dateA;
+        })
+        .slice(0, 10)
+        .map(file => ({
+          id: file.id,
+          name: file.name,
+          bytes: file.size,
+          uploadedAt: file.uploadedAt
+        }));
+
+      // S3 external objects (if requested and credentials available)
+      let s3ObjectCount = 0;
+      let s3TotalSize = 0;
+      let isPartial = false;
+      const credentials = getS3CredentialsFromSession(userId);
+
+      if (includeExternal && credentials && hasS3CredentialsInSession(userId)) {
+        try {
+          const buckets = await s3Service.listBuckets(credentials);
+          for (const bucket of buckets) {
+            let continuationToken: string | undefined = undefined;
+            let hasMore = true;
+            
+            while (hasMore) {
+              const objects = await s3Service.listObjects(bucket.name, '', credentials, continuationToken, 1000);
+              s3ObjectCount += objects.objects.length;
+              s3TotalSize += objects.objects.reduce((sum, obj) => sum + (obj.size || 0), 0);
+              
+              // Add S3 objects to bucket usage
+              if (!bucketUsageMap[bucket.name]) {
+                bucketUsageMap[bucket.name] = { count: 0, bytes: 0 };
+              }
+              bucketUsageMap[bucket.name].count += objects.objects.length;
+              bucketUsageMap[bucket.name].bytes += objects.objects.reduce((sum, obj) => sum + (obj.size || 0), 0);
+              
+              // Add S3 objects to file types (infer from extension)
+              objects.objects.forEach(obj => {
+                let type = 'Other';
+                if (obj.key) {
+                  const ext = obj.key.split('.').pop()?.toLowerCase();
+                  if (ext && ['jpg', 'jpeg', 'png', 'gif', 'bmp', 'webp'].includes(ext)) type = 'Images';
+                  else if (ext && ['mp4', 'avi', 'mov', 'wmv', 'flv'].includes(ext)) type = 'Videos';
+                  else if (ext && ['mp3', 'wav', 'flac', 'aac'].includes(ext)) type = 'Audio';
+                  else if (ext && ['pdf'].includes(ext)) type = 'PDFs';
+                  else if (ext && ['doc', 'docx', 'txt', 'rtf'].includes(ext)) type = 'Documents';
+                  else if (ext && ['zip', 'rar', '7z', 'tar', 'gz'].includes(ext)) type = 'Archives';
+                }
+                
+                if (!filesByTypeMap[type]) filesByTypeMap[type] = { count: 0, bytes: 0 };
+                filesByTypeMap[type].count++;
+                filesByTypeMap[type].bytes += obj.size || 0;
+              });
+              
+              continuationToken = objects.nextToken;
+              hasMore = objects.isTruncated && !!continuationToken;
+              
+              // Safety limit to prevent infinite loops
+              if (s3ObjectCount > 50000) {
+                console.warn(`S3 analytics: Hit safety limit of 50k objects for user ${userId}`);
+                isPartial = true;
+                break;
+              }
+            }
+            
+            if (isPartial) break;
+          }
+        } catch (s3Error) {
+          console.warn("Error fetching S3 external stats:", s3Error);
+          isPartial = true;
+        }
+      }
+
+      // Storage capacity calculation (1TB mock + actual S3 usage)
+      const baseCapacity = 1024 * 1024 * 1024 * 1024; // 1TB
+      const totalUsed = totalSize + s3TotalSize;
+      const totalCapacity = baseCapacity;
+      const usagePercentage = (totalUsed / totalCapacity) * 100;
+
+      const analyticsData = {
+        // Capacity metrics
+        capacityBytes: totalCapacity,
+        usedBytes: totalUsed,
+        availableBytes: totalCapacity - totalUsed,
+        usagePct: usagePercentage,
+        
+        // Count metrics
+        counts: {
+          files: files.length + s3ObjectCount,
+          folders: folders.length,
+          shared: sharedFiles + sharedFolders
+        },
+        
+        // Distribution data for charts
+        filesByType: Object.entries(filesByTypeMap).map(([type, data]) => ({
+          type,
+          count: data.count,
+          bytes: data.bytes
+        })),
+        
+        sizeDistribution,
+        
+        bucketUsage: Object.entries(bucketUsageMap).map(([bucket, data]) => ({
+          bucket,
+          count: data.count,
+          bytes: data.bytes
+        })),
+        
+        // Top content
+        topFiles,
+        recentUploads,
+        
+        // Metadata
+        partial: isPartial,
+        refreshedAt: Date.now(),
+        includeExternal
+      };
+
+      // Cache the result
+      analyticsCache.set(userId, { data: analyticsData, timestamp: Date.now() });
+      
+      res.json(analyticsData);
+    } catch (error) {
+      console.error("Error fetching analytics:", error);
+      res.status(500).json({ message: "Failed to fetch analytics data" });
+    }
+  });
+
   // S3 Connection Management Endpoints
   
   // Connect to user's AWS account

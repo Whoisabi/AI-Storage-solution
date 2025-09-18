@@ -91,10 +91,12 @@ export default function Sidebar() {
             </Link>
           </li>
           <li>
-            <a href="#" className="flex items-center space-x-3 p-3 rounded-lg text-gray-700 hover:bg-gray-100 transition-colors">
+            <Link href="/analytics" className={`flex items-center space-x-3 p-3 rounded-lg transition-colors ${
+              location === "/analytics" ? "bg-primary text-white" : "text-gray-700 hover:bg-gray-100"
+            }`}>
               <BarChart3 className="h-5 w-5" />
               <span>Analytics</span>
-            </a>
+            </Link>
           </li>
           <li>
             <a href="#" className="flex items-center space-x-3 p-3 rounded-lg text-gray-700 hover:bg-gray-100 transition-colors">
