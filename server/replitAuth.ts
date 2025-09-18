@@ -141,7 +141,15 @@ export const isAuthenticated: RequestHandler = async (req, res, next) => {
 
   const refreshToken = user.refresh_token;
   if (!refreshToken) {
-    res.status(401).json({ message: "Unauthorized" });
+    // Clear the session when no refresh token is available
+    req.logout((err) => {
+      if (err) {
+        console.error("Error during logout when no refresh token found:", err);
+      }
+      req.session?.destroy(() => {
+        res.clearCookie("connect.sid").status(401).json({ message: "Unauthorized" });
+      });
+    });
     return;
   }
 
@@ -151,7 +159,15 @@ export const isAuthenticated: RequestHandler = async (req, res, next) => {
     updateUserSession(user, tokenResponse);
     return next();
   } catch (error) {
-    res.status(401).json({ message: "Unauthorized" });
+    // Clear the session when token refresh fails to prevent stuck auth state
+    req.logout((err) => {
+      if (err) {
+        console.error("Error during logout after failed token refresh:", err);
+      }
+      req.session?.destroy(() => {
+        res.clearCookie("connect.sid").status(401).json({ message: "Unauthorized" });
+      });
+    });
     return;
   }
 };
