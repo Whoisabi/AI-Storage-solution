@@ -649,6 +649,51 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const totalCapacity = baseCapacity;
       const usagePercentage = (totalUsed / totalCapacity) * 100;
 
+      // Generate usage history over time (last 30 days) 
+      const usageHistory = [];
+      
+      // Create daily data points for the last 30 days
+      for (let i = 29; i >= 0; i--) {
+        const date = new Date(Date.now() - i * 24 * 60 * 60 * 1000);
+        const dayStart = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+        const dayEnd = new Date(dayStart.getTime() + 24 * 60 * 60 * 1000);
+        
+        // Calculate cumulative storage used up to this day
+        const filesUpToDate = files.filter(file => 
+          file.uploadedAt && new Date(file.uploadedAt) <= dayEnd
+        );
+        const cumulativeSize = filesUpToDate.reduce((sum, file) => sum + file.size, 0);
+        const cumulativeCount = filesUpToDate.length;
+        
+        usageHistory.push({
+          date: dayStart.toISOString().split('T')[0], // YYYY-MM-DD format
+          timestamp: dayStart.getTime(),
+          usedBytes: cumulativeSize,
+          fileCount: cumulativeCount,
+          usagePercent: (cumulativeSize / totalCapacity) * 100
+        });
+      }
+      
+      // Generate upload activity over time (last 7 days by hour for more granular view)
+      const uploadActivity = [];
+      for (let i = 6; i >= 0; i--) {
+        const date = new Date(Date.now() - i * 24 * 60 * 60 * 1000);
+        const dayStart = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+        const dayEnd = new Date(dayStart.getTime() + 24 * 60 * 60 * 1000);
+        
+        const uploadsThisDay = files.filter(file => 
+          file.uploadedAt && 
+          new Date(file.uploadedAt) >= dayStart && 
+          new Date(file.uploadedAt) < dayEnd
+        );
+        
+        uploadActivity.push({
+          date: dayStart.toISOString().split('T')[0],
+          uploads: uploadsThisDay.length,
+          bytesUploaded: uploadsThisDay.reduce((sum, file) => sum + file.size, 0)
+        });
+      }
+
       const analyticsData = {
         // Capacity metrics
         capacityBytes: totalCapacity,
@@ -681,6 +726,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         // Top content
         topFiles,
         recentUploads,
+        
+        // Time-series data for charts
+        usageHistory,
+        uploadActivity,
         
         // Metadata
         partial: isPartial,

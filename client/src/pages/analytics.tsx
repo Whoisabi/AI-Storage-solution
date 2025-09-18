@@ -6,7 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import Sidebar from "@/components/sidebar";
 import {
-  PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, CartesianGrid
+  PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, CartesianGrid, LineChart, Line, ResponsiveContainer, Area, AreaChart
 } from "recharts";
 import { 
   HardDrive, 
@@ -57,6 +57,18 @@ interface AnalyticsData {
     bytes: number;
     uploadedAt: string;
   }>;
+  usageHistory: Array<{
+    date: string;
+    timestamp: number;
+    usedBytes: number;
+    fileCount: number;
+    usagePercent: number;
+  }>;
+  uploadActivity: Array<{
+    date: string;
+    uploads: number;
+    bytesUploaded: number;
+  }>;
   partial: boolean;
   refreshedAt: number;
   includeExternal: boolean;
@@ -77,10 +89,10 @@ export default function Analytics() {
       }
       return response.json();
     },
-    refetchInterval: (query) => document.visibilityState === 'visible' ? 30000 : false,
+    refetchInterval: (query) => document.visibilityState === 'visible' ? 10000 : false, // 10 seconds for more real-time updates
     refetchOnWindowFocus: true,
     retry: 2,
-    staleTime: 5 * 60 * 1000, // 5 minutes
+    staleTime: 2 * 60 * 1000, // 2 minutes
   });
 
   const handleRefresh = async () => {
@@ -466,6 +478,149 @@ export default function Analytics() {
                     </div>
                   </div>
                 )}
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Time-Series Charts Row */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+            {/* Storage Usage History */}
+            <Card className="bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 shadow-sm">
+              <CardHeader className="pb-4">
+                <CardTitle className="text-lg font-semibold text-gray-900 dark:text-white flex items-center">
+                  <TrendingUp className="h-5 w-5 mr-2 text-blue-600 dark:text-blue-400" />
+                  Storage Usage Over Time
+                </CardTitle>
+                <CardDescription className="text-gray-600 dark:text-gray-400">Cumulative storage usage (last 30 days)</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <ChartContainer config={{}} className="h-64">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <AreaChart data={analytics.usageHistory} margin={{ top: 20, right: 30, left: 20, bottom: 20 }}>
+                      <CartesianGrid strokeDasharray="3 3" className="stroke-gray-200 dark:stroke-gray-700" />
+                      <XAxis 
+                        dataKey="date"
+                        tick={{ fill: 'currentColor', fontSize: 12 }}
+                        className="text-gray-600 dark:text-gray-400"
+                        tickFormatter={(value) => {
+                          const date = new Date(value);
+                          return `${date.getMonth() + 1}/${date.getDate()}`;
+                        }}
+                      />
+                      <YAxis 
+                        tick={{ fill: 'currentColor', fontSize: 12 }}
+                        className="text-gray-600 dark:text-gray-400"
+                        tickFormatter={(value) => formatBytes(value)}
+                      />
+                      <ChartTooltip
+                        content={({ active, payload, label }) => {
+                          if (active && payload && payload[0]) {
+                            const data = payload[0].payload;
+                            return (
+                              <div className="bg-white dark:bg-gray-800 p-3 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg">
+                                <p className="font-medium text-gray-900 dark:text-white">{new Date(label).toLocaleDateString()}</p>
+                                <p className="text-blue-600 dark:text-blue-400">Used: {formatBytes(data.usedBytes)}</p>
+                                <p className="text-green-600 dark:text-green-400">Files: {data.fileCount}</p>
+                                <p className="text-purple-600 dark:text-purple-400">Usage: {data.usagePercent.toFixed(2)}%</p>
+                              </div>
+                            );
+                          }
+                          return null;
+                        }}
+                      />
+                      <Area
+                        type="monotone"
+                        dataKey="usedBytes"
+                        stroke="#3b82f6"
+                        fill="#3b82f6"
+                        fillOpacity={0.2}
+                        strokeWidth={2}
+                        dot={{ fill: '#3b82f6', r: 3 }}
+                        activeDot={{ r: 5, stroke: '#3b82f6', strokeWidth: 2, fill: '#fff' }}
+                      />
+                    </AreaChart>
+                  </ResponsiveContainer>
+                </ChartContainer>
+              </CardContent>
+            </Card>
+
+            {/* Upload Activity */}
+            <Card className="bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 shadow-sm">
+              <CardHeader className="pb-4">
+                <CardTitle className="text-lg font-semibold text-gray-900 dark:text-white flex items-center">
+                  <Files className="h-5 w-5 mr-2 text-green-600 dark:text-green-400" />
+                  Upload Activity
+                </CardTitle>
+                <CardDescription className="text-gray-600 dark:text-gray-400">Daily upload count and volume (last 7 days)</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <ChartContainer config={{}} className="h-64">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <LineChart data={analytics.uploadActivity} margin={{ top: 20, right: 30, left: 20, bottom: 20 }}>
+                      <CartesianGrid strokeDasharray="3 3" className="stroke-gray-200 dark:stroke-gray-700" />
+                      <XAxis 
+                        dataKey="date"
+                        tick={{ fill: 'currentColor', fontSize: 12 }}
+                        className="text-gray-600 dark:text-gray-400"
+                        tickFormatter={(value) => {
+                          const date = new Date(value);
+                          return `${date.getMonth() + 1}/${date.getDate()}`;
+                        }}
+                      />
+                      <YAxis 
+                        yAxisId="count"
+                        orientation="left"
+                        tick={{ fill: 'currentColor', fontSize: 12 }}
+                        className="text-gray-600 dark:text-gray-400"
+                        label={{ value: 'Files', angle: -90, position: 'insideLeft', style: { textAnchor: 'middle' } }}
+                      />
+                      <YAxis 
+                        yAxisId="bytes"
+                        orientation="right"
+                        tick={{ fill: 'currentColor', fontSize: 12 }}
+                        className="text-gray-600 dark:text-gray-400"
+                        tickFormatter={(value) => formatBytes(value)}
+                        label={{ value: 'Size', angle: 90, position: 'insideRight', style: { textAnchor: 'middle' } }}
+                      />
+                      <ChartTooltip
+                        content={({ active, payload, label }) => {
+                          if (active && payload && payload.length) {
+                            const data = payload[0].payload;
+                            return (
+                              <div className="bg-white dark:bg-gray-800 p-3 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg">
+                                <p className="font-medium text-gray-900 dark:text-white">{new Date(label).toLocaleDateString()}</p>
+                                <p className="text-green-600 dark:text-green-400">Uploads: {data.uploads}</p>
+                                <p className="text-blue-600 dark:text-blue-400">Volume: {formatBytes(data.bytesUploaded)}</p>
+                              </div>
+                            );
+                          }
+                          return null;
+                        }}
+                      />
+                      <Line
+                        yAxisId="count"
+                        type="monotone"
+                        dataKey="uploads"
+                        stroke="#10b981"
+                        strokeWidth={2}
+                        dot={{ fill: '#10b981', r: 4 }}
+                        activeDot={{ r: 6, stroke: '#10b981', strokeWidth: 2, fill: '#fff' }}
+                        name="Upload Count"
+                      />
+                      <Line
+                        yAxisId="bytes"
+                        type="monotone"
+                        dataKey="bytesUploaded"
+                        stroke="#3b82f6"
+                        strokeWidth={2}
+                        strokeDasharray="5 5"
+                        dot={{ fill: '#3b82f6', r: 3 }}
+                        activeDot={{ r: 5, stroke: '#3b82f6', strokeWidth: 2, fill: '#fff' }}
+                        name="Upload Volume"
+                      />
+                    </LineChart>
+                  </ResponsiveContainer>
+                </ChartContainer>
               </CardContent>
             </Card>
           </div>
