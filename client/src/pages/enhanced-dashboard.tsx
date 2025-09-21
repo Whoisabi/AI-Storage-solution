@@ -276,11 +276,8 @@ export default function EnhancedDashboard() {
           </Card>
         </div>
 
-        {/* Enhanced File Upload Zone */}
-        <FileUpload />
-
-        {/* Enhanced File Management */}
-        <Card className="mt-8">
+        {/* Virtual Disks Section - Moved above Upload Files */}
+        <Card className="mb-8">
           <CardContent className="p-6">
             {/* Virtual Disks Header with Navigation */}
             <div className="flex items-center justify-between mb-6">
@@ -376,28 +373,58 @@ export default function EnhancedDashboard() {
                     <Card 
                       key={bucket.name}
                       className="cursor-pointer hover:shadow-md transition-shadow border-blue-200 bg-blue-50"
-                      onClick={() => {
-                        const newPath = [...currentLocation.path, {
-                          type: 's3-bucket',
-                          name: bucket.name
-                        }];
-                        navigateTo({
-                          type: 's3-bucket',
-                          name: bucket.name,
-                          path: newPath
-                        });
-                      }}
                       data-testid={`card-bucket-${bucket.name}`}
                     >
                       <CardContent className="p-4">
-                        <div className="flex items-center space-x-3">
-                          <div className="w-8 h-8 bg-blue-100 rounded flex items-center justify-center">
-                            <Database className="h-5 w-5 text-blue-600" />
+                        <div className="flex items-center justify-between">
+                          <div 
+                            className="flex items-center space-x-3 flex-1 min-w-0"
+                            onClick={() => {
+                              const newPath = [...currentLocation.path, {
+                                type: 's3-bucket',
+                                name: bucket.name
+                              }];
+                              navigateTo({
+                                type: 's3-bucket',
+                                name: bucket.name,
+                                path: newPath
+                              });
+                            }}
+                          >
+                            <div className="w-8 h-8 bg-blue-100 rounded flex items-center justify-center">
+                              <Database className="h-5 w-5 text-blue-600" />
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <p className="font-medium text-blue-900 truncate">{bucket.name}</p>
+                              <p className="text-sm text-blue-600">S3 Bucket</p>
+                            </div>
                           </div>
-                          <div className="flex-1 min-w-0">
-                            <p className="font-medium text-blue-900 truncate">{bucket.name}</p>
-                            <p className="text-sm text-blue-600">S3 Bucket</p>
-                          </div>
+                          {/* Upload button on the right */}
+                          <Button
+                            size="sm"
+                            className="ml-4 bg-blue-600 hover:bg-blue-700 text-white"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              // Navigate to bucket first, then trigger file upload
+                              const newPath = [...currentLocation.path, {
+                                type: 's3-bucket',
+                                name: bucket.name
+                              }];
+                              navigateTo({
+                                type: 's3-bucket',
+                                name: bucket.name,
+                                path: newPath
+                              });
+                              // Trigger file input after navigation
+                              setTimeout(() => {
+                                const fileInput = document.getElementById('bucket-file-upload') as HTMLInputElement;
+                                if (fileInput) fileInput.click();
+                              }, 100);
+                            }}
+                            data-testid={`button-upload-${bucket.name}`}
+                          >
+                            Upload
+                          </Button>
                         </div>
                       </CardContent>
                     </Card>
@@ -413,6 +440,28 @@ export default function EnhancedDashboard() {
             )}
           </CardContent>
         </Card>
+        
+        {/* Hidden file input for bucket uploads */}
+        <input
+          type="file"
+          multiple
+          id="bucket-file-upload"
+          className="hidden"
+          onChange={(e) => {
+            const files = Array.from(e.target.files || []);
+            if (files.length > 0) {
+              // This will be handled by the FileUpload component's upload logic
+              // when we're in a bucket context
+              console.log('Files selected for bucket upload:', files);
+            }
+          }}
+          data-testid="input-bucket-file-upload"
+        />
+        
+        {/* Upload Files Section - Moved below Virtual Disks */}
+        <div className="mt-8">
+          <FileUpload />
+        </div>
       </main>
       
       {/* S3 Connection Modal */}

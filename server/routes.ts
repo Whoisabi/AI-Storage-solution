@@ -539,16 +539,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const userId = req.user.id;
       const refresh = req.query.refresh === 'true';
       const includeExternal = req.query.includeExternal === 'true';
+      const selectedDisk = req.query.selectedDisk as string;
       
-      // Check cache first (keyed by userId and includeExternal)
-      const cacheKey = `${userId}:${includeExternal}`;
+      // Check cache first (keyed by userId, includeExternal, and selectedDisk)
+      const cacheKey = `${userId}:${includeExternal}:${selectedDisk || 'all'}`;
       const cached = analyticsCache.get(cacheKey);
       if (!refresh && cached && (Date.now() - cached.timestamp) < CACHE_TTL) {
         return res.json(cached.data);
       }
 
-      const files = await storage.getFilesByUserId(userId);
+      let files = await storage.getFilesByUserId(userId);
       const folders = await storage.getFoldersByUserId(userId);
+      
+      // Filter files by selected disk if specified
+      if (selectedDisk) {
+        files = files.filter(file => file.s3Bucket === selectedDisk);
+      }
       
       // Base calculations from app-managed files
       const totalSize = files.reduce((sum, file) => sum + file.size, 0);
@@ -634,10 +640,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
       let isPartial = false;
       const credentials = getS3CredentialsFromSession(userId);
 
-      if (includeExternal && credentials && hasS3CredentialsInSession(userId)) {
+      if ((includeExternal || selectedDisk) && credentials && hasS3CredentialsInSession(userId)) {
         try {
-          const buckets = await s3Service.listBuckets(credentials);
-          for (const bucket of buckets) {
+          let bucketsToProcess = [];
+          
+          if (selectedDisk) {
+            // When a specific disk is selected, only process that bucket
+            bucketsToProcess = [{ name: selectedDisk }];
+          } else {
+            // When no specific disk is selected, process all buckets
+            const allBuckets = await s3Service.listBuckets(credentials);
+            bucketsToProcess = allBuckets;
+          }
+          
+          for (const bucket of bucketsToProcess) {
             let continuationToken: string | undefined = undefined;
             let hasMore = true;
             
@@ -781,7 +797,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         // Metadata
         partial: isPartial,
         refreshedAt: Date.now(),
-        includeExternal
+        includeExternal,
+        selectedDisk
       };
 
       // Cache the result with compound key

@@ -4,6 +4,7 @@ import { ChartContainer, ChartTooltip } from "@/components/ui/chart";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
+import { useNavigation } from "@/hooks/useNavigation";
 import Sidebar from "@/components/sidebar";
 import {
   PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, CartesianGrid, LineChart, Line, ResponsiveContainer, Area, AreaChart
@@ -77,7 +78,14 @@ interface AnalyticsData {
 
 export default function Analytics() {
   const { toast } = useToast();
+  const { currentLocation } = useNavigation();
   const [includeExternal, setIncludeExternal] = useState(false);
+  
+  // Determine if we're in a specific disk context
+  const isInDiskContext = currentLocation.type === 's3-bucket' || currentLocation.type === 's3-prefix';
+  const selectedDiskName = isInDiskContext 
+    ? (currentLocation.type === 's3-bucket' ? currentLocation.name : currentLocation.bucketName)
+    : null;
 
   // Set up Server-Sent Events for real-time analytics updates
   useEffect(() => {
@@ -110,10 +118,11 @@ export default function Analytics() {
   }, []);
 
   const { data: analytics, isLoading, refetch, error } = useQuery<AnalyticsData>({
-    queryKey: ["/api/analytics", includeExternal],
+    queryKey: ["/api/analytics", includeExternal, selectedDiskName],
     queryFn: async () => {
       const params = new URLSearchParams();
-      if (includeExternal) params.append('includeExternal', 'true');
+      if (includeExternal && !isInDiskContext) params.append('includeExternal', 'true');
+      if (selectedDiskName) params.append('selectedDisk', selectedDiskName);
       const response = await fetch(`/api/analytics?${params}`, { credentials: 'include' });
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
@@ -131,7 +140,8 @@ export default function Analytics() {
       // Force refresh by adding refresh=true parameter
       const params = new URLSearchParams();
       params.append('refresh', 'true');
-      if (includeExternal) params.append('includeExternal', 'true');
+      if (includeExternal && !isInDiskContext) params.append('includeExternal', 'true');
+      if (selectedDiskName) params.append('selectedDisk', selectedDiskName);
       
       const response = await fetch(`/api/analytics?${params}`, { credentials: 'include' });
       if (!response.ok) {
@@ -142,7 +152,9 @@ export default function Analytics() {
       
       toast({
         title: "Analytics Refreshed",
-        description: "Latest storage analytics have been loaded",
+        description: selectedDiskName 
+          ? `Analytics for ${selectedDiskName} refreshed`
+          : "Latest storage analytics have been loaded",
       });
     } catch (error) {
       console.error('Refresh error:', error);
@@ -221,22 +233,39 @@ export default function Analytics() {
           {/* Header */}
           <div className="flex items-center justify-between mb-8">
             <div>
-              <h1 className="text-3xl font-bold text-gray-900 dark:text-white" data-testid="text-analytics-title">Analytics</h1>
-              <p className="text-gray-600 dark:text-gray-400 mt-1">Cloud storage insights and usage statistics</p>
+              <h1 className="text-3xl font-bold text-gray-900 dark:text-white" data-testid="text-analytics-title">
+                {isInDiskContext ? `${selectedDiskName} Analytics` : 'Analytics'}
+              </h1>
+              <p className="text-gray-600 dark:text-gray-400 mt-1">
+                {isInDiskContext 
+                  ? `Storage insights and usage statistics for ${selectedDiskName}` 
+                  : "Cloud storage insights and usage statistics"}
+              </p>
             </div>
             <div className="flex items-center space-x-3">
-              <Button
-                variant={includeExternal ? "default" : "outline"}
-                onClick={() => setIncludeExternal(!includeExternal)}
-                data-testid="button-toggle-external"
-                className={includeExternal 
-                  ? "bg-blue-600 hover:bg-blue-700 text-white" 
-                  : "bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700"
-                }
-              >
-                <Database className="h-4 w-4 mr-2" />
-                {includeExternal ? 'Hide External' : 'Include External'}
-              </Button>
+              {/* Show disk info instead of toggle when in disk context */}
+              {isInDiskContext ? (
+                <div className="flex items-center space-x-2 px-4 py-2 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-700 rounded-lg">
+                  <Database className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+                  <span className="text-blue-900 dark:text-blue-100 font-medium">{selectedDiskName}</span>
+                  <Badge variant="outline" className="bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-200 border-blue-300 dark:border-blue-600">
+                    {currentLocation.type === 's3-bucket' ? 'S3 Bucket' : 'S3 Folder'}
+                  </Badge>
+                </div>
+              ) : (
+                <Button
+                  variant={includeExternal ? "default" : "outline"}
+                  onClick={() => setIncludeExternal(!includeExternal)}
+                  data-testid="button-toggle-external"
+                  className={includeExternal 
+                    ? "bg-blue-600 hover:bg-blue-700 text-white" 
+                    : "bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700"
+                  }
+                >
+                  <Database className="h-4 w-4 mr-2" />
+                  {includeExternal ? 'Hide External' : 'Include External'}
+                </Button>
+              )}
               <Button 
                 onClick={handleRefresh} 
                 data-testid="button-refresh-analytics"
