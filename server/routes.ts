@@ -505,7 +505,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Analytics cache - in-memory per user with TTL (keyed by userId:includeExternal)
   const analyticsCache = new Map<string, { data: any; timestamp: number }>();
-  const CACHE_TTL = 10 * 60 * 1000; // 10 minutes
+  const CACHE_TTL = 2 * 60 * 1000; // 2 minutes for more responsive updates
 
   // Server-Sent Events for real-time analytics updates
   const analyticsEventClients = new Map<string, Set<any>>();
@@ -527,9 +527,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
   
   // Clear analytics cache and broadcast update (clears all variants for user)
   const invalidateAnalyticsCache = (userId: string) => {
-    // Clear all cache entries for this user (both includeExternal variants)
-    analyticsCache.delete(`${userId}:true`);
-    analyticsCache.delete(`${userId}:false`);
+    // Clear all cache entries for this user (all includeExternal and selectedDisk variants)
+    const keysToDelete: string[] = [];
+    const allKeys = Array.from(analyticsCache.keys());
+    for (const key of allKeys) {
+      if (key.startsWith(`${userId}:`)) {
+        keysToDelete.push(key);
+      }
+    }
+    keysToDelete.forEach(key => analyticsCache.delete(key));
     broadcastAnalyticsUpdate(userId);
   };
 
