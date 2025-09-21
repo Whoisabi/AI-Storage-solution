@@ -53,6 +53,7 @@ export default function ShareModal({ isOpen, onClose, file }: ShareModalProps) {
     },
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ['/api/files'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/analytics'] });
       setShareUrl(data.shareUrl || "");
       toast({
         title: "Success",

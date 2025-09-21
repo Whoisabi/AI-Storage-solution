@@ -184,6 +184,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const file = await storage.createFile(fileData);
 
+      // Invalidate analytics cache and broadcast update
+      invalidateAnalyticsCache(userId);
+
       res.json({
         success: true,
         file: {
@@ -224,6 +227,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
 
       const folder = await storage.createFolder(folderData);
+      
+      // Invalidate analytics cache and broadcast update
+      invalidateAnalyticsCache(userId);
+      
       res.json({ success: true, folder });
     } catch (error) {
       console.error("Folder creation error:", error);
@@ -248,6 +255,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const shareToken = isShared ? nanoid() : undefined;
       const updatedFolder = await storage.updateFolderSharing(folderId, isShared, shareToken);
+
+      // Invalidate analytics cache and broadcast update (sharing affects analytics)
+      invalidateAnalyticsCache(userId);
 
       let shareUrl = undefined;
       if (isShared && shareToken) {
@@ -281,6 +291,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       await storage.deleteFolder(folderId);
+      
+      // Invalidate analytics cache and broadcast update
+      invalidateAnalyticsCache(userId);
+      
       res.json({ success: true, message: "Folder deleted successfully" });
     } catch (error) {
       console.error("Error deleting folder:", error);
@@ -321,6 +335,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const shareToken = isShared ? nanoid() : undefined;
       const updatedFile = await storage.updateFileSharing(fileId, isShared, shareToken);
+
+      // Invalidate analytics cache and broadcast update (sharing affects analytics)
+      invalidateAnalyticsCache(userId);
 
       let shareUrl = undefined;
       if (isShared && shareToken) {
@@ -412,6 +429,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Delete from database
       await storage.deleteFile(fileId);
 
+      // Invalidate analytics cache and broadcast update
+      invalidateAnalyticsCache(userId);
+
       res.json({ success: true, message: "File deleted successfully" });
     } catch (error) {
       console.error("Error deleting file:", error);
@@ -483,9 +503,35 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Analytics cache - in-memory per user with TTL
+  // Analytics cache - in-memory per user with TTL (keyed by userId:includeExternal)
   const analyticsCache = new Map<string, { data: any; timestamp: number }>();
   const CACHE_TTL = 10 * 60 * 1000; // 10 minutes
+
+  // Server-Sent Events for real-time analytics updates
+  const analyticsEventClients = new Map<string, Set<any>>();
+  
+  // Broadcast analytics update event to user's SSE clients
+  const broadcastAnalyticsUpdate = (userId: string) => {
+    const userClients = analyticsEventClients.get(userId);
+    if (userClients) {
+      userClients.forEach(res => {
+        try {
+          res.write(`data: ${JSON.stringify({ type: 'analytics:update', timestamp: Date.now() })}\n\n`);
+        } catch (error) {
+          // Remove client if write fails (connection closed)
+          userClients.delete(res);
+        }
+      });
+    }
+  };
+  
+  // Clear analytics cache and broadcast update (clears all variants for user)
+  const invalidateAnalyticsCache = (userId: string) => {
+    // Clear all cache entries for this user (both includeExternal variants)
+    analyticsCache.delete(`${userId}:true`);
+    analyticsCache.delete(`${userId}:false`);
+    broadcastAnalyticsUpdate(userId);
+  };
 
   // Analytics endpoint with comprehensive storage insights
   app.get('/api/analytics', isAuthenticated, async (req: any, res) => {
@@ -494,8 +540,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const refresh = req.query.refresh === 'true';
       const includeExternal = req.query.includeExternal === 'true';
       
-      // Check cache first
-      const cached = analyticsCache.get(userId);
+      // Check cache first (keyed by userId and includeExternal)
+      const cacheKey = `${userId}:${includeExternal}`;
+      const cached = analyticsCache.get(cacheKey);
       if (!refresh && cached && (Date.now() - cached.timestamp) < CACHE_TTL) {
         return res.json(cached.data);
       }
@@ -737,14 +784,61 @@ export async function registerRoutes(app: Express): Promise<Server> {
         includeExternal
       };
 
-      // Cache the result
-      analyticsCache.set(userId, { data: analyticsData, timestamp: Date.now() });
+      // Cache the result with compound key
+      analyticsCache.set(cacheKey, { data: analyticsData, timestamp: Date.now() });
       
       res.json(analyticsData);
     } catch (error) {
       console.error("Error fetching analytics:", error);
       res.status(500).json({ message: "Failed to fetch analytics data" });
     }
+  });
+
+  // Server-Sent Events endpoint for real-time analytics updates
+  app.get('/api/analytics/events', isAuthenticated, (req: any, res) => {
+    const userId = req.user.id;
+    
+    // Set headers for SSE
+    res.writeHead(200, {
+      'Content-Type': 'text/event-stream',
+      'Cache-Control': 'no-cache',
+      'Connection': 'keep-alive',
+      'Access-Control-Allow-Origin': '*',
+      'Access-Control-Allow-Headers': 'Cache-Control'
+    });
+
+    // Add client to user's SSE clients
+    if (!analyticsEventClients.has(userId)) {
+      analyticsEventClients.set(userId, new Set());
+    }
+    analyticsEventClients.get(userId)!.add(res);
+
+    // Send initial ping
+    res.write(`data: ${JSON.stringify({ type: 'connected', timestamp: Date.now() })}\n\n`);
+
+    // Send heartbeat every 30 seconds to keep connection alive
+    const heartbeat = setInterval(() => {
+      try {
+        res.write(`:heartbeat\n\n`);
+      } catch (error) {
+        clearInterval(heartbeat);
+      }
+    }, 30000);
+
+    // Handle client disconnect and cleanup
+    const cleanup = () => {
+      clearInterval(heartbeat);
+      const userClients = analyticsEventClients.get(userId);
+      if (userClients) {
+        userClients.delete(res);
+        if (userClients.size === 0) {
+          analyticsEventClients.delete(userId);
+        }
+      }
+    };
+
+    req.on('close', cleanup);
+    req.on('error', cleanup);
   });
 
   // S3 Connection Management Endpoints
@@ -886,6 +980,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         credentials
       );
 
+      // Invalidate analytics cache and broadcast update for S3 uploads
+      invalidateAnalyticsCache(userId);
+
       res.json({
         success: true,
         message: "File uploaded successfully",
@@ -948,6 +1045,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Delete objects from S3
       const deleteResults = await s3Service.deleteS3Objects(bucket, keys, credentials);
+      
+      // Invalidate analytics cache and broadcast update for S3 deletions
+      invalidateAnalyticsCache(userId);
       
       res.json({ 
         success: true, 

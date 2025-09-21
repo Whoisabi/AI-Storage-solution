@@ -18,7 +18,8 @@ import {
   Clock,
   FileText
 } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { queryClient } from "@/lib/queryClient";
 
 interface AnalyticsData {
   capacityBytes: number;
@@ -77,6 +78,36 @@ interface AnalyticsData {
 export default function Analytics() {
   const { toast } = useToast();
   const [includeExternal, setIncludeExternal] = useState(false);
+
+  // Set up Server-Sent Events for real-time analytics updates
+  useEffect(() => {
+    const eventSource = new EventSource('/api/analytics/events', { withCredentials: true });
+    
+    eventSource.onopen = () => {
+      console.log('Analytics SSE connection opened');
+    };
+    
+    eventSource.onmessage = (event) => {
+      try {
+        const data = JSON.parse(event.data);
+        if (data.type === 'analytics:update') {
+          // Invalidate and refetch analytics data
+          queryClient.invalidateQueries({ queryKey: ["/api/analytics"] });
+        }
+      } catch (error) {
+        console.error('Error parsing SSE event:', error);
+      }
+    };
+    
+    eventSource.onerror = (error) => {
+      console.error('Analytics SSE error:', error);
+    };
+    
+    // Cleanup on unmount
+    return () => {
+      eventSource.close();
+    };
+  }, []);
 
   const { data: analytics, isLoading, refetch, error } = useQuery<AnalyticsData>({
     queryKey: ["/api/analytics", includeExternal],
