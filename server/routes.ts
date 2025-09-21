@@ -1,7 +1,15 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-import { setupAuth, isAuthenticated } from "./auth";
+import { 
+  setupAuth, 
+  isAuthenticated, 
+  fileOpLimiter, 
+  uploadLimiter, 
+  contactLimiter, 
+  sharedLimiter, 
+  generalApiLimiter 
+} from "./auth";
 import { s3Service } from "./services/s3Service";
 import { 
   storeS3CredentialsInSession, 
@@ -41,6 +49,9 @@ const upload = multer({
 });
 
 export async function registerRoutes(app: Express): Promise<Server> {
+  // Apply general rate limiting to all API routes
+  app.use('/api', generalApiLimiter);
+
   // Health check endpoint for Docker
   app.get('/api/health', (_req, res) => {
     res.json({ status: 'ok', timestamp: new Date().toISOString() });
@@ -102,7 +113,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "Password not set for this account" });
       }
       
-      const bcrypt = await import('bcryptjs');
+      const bcrypt = await import('bcrypt');
       const isValidPassword = await bcrypt.compare(currentPassword, user.password);
       if (!isValidPassword) {
         return res.status(400).json({ message: "Current password is incorrect" });
@@ -123,7 +134,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Contact form endpoint
-  app.post('/api/contact', async (req, res) => {
+  app.post('/api/contact', contactLimiter, async (req, res) => {
     try {
       const { name, email, subject, category, message } = contactFormSchema.parse(req.body);
       
@@ -152,7 +163,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // File upload endpoint
-  app.post('/api/files/upload', isAuthenticated, upload.single('file'), async (req: any, res) => {
+  app.post('/api/files/upload', isAuthenticated, uploadLimiter, upload.single('file'), async (req: any, res) => {
     try {
       if (!req.file) {
         return res.status(400).json({ message: "No file uploaded" });
@@ -303,7 +314,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Download file
-  app.get('/api/files/:id/download', isAuthenticated, async (req: any, res) => {
+  app.get('/api/files/:id/download', isAuthenticated, fileOpLimiter, async (req: any, res) => {
     try {
       const fileId = parseInt(req.params.id);
       const userId = req.user.id;
@@ -322,7 +333,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Share file
-  app.post('/api/files/:id/share', isAuthenticated, async (req: any, res) => {
+  app.post('/api/files/:id/share', isAuthenticated, fileOpLimiter, async (req: any, res) => {
     try {
       const fileId = parseInt(req.params.id);
       const userId = req.user.id;
@@ -360,7 +371,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Access shared file
-  app.get('/api/shared/file/:token', async (req, res) => {
+  app.get('/api/shared/file/:token', sharedLimiter, async (req, res) => {
     try {
       const { token } = req.params;
       const file = await storage.getSharedFile(token);
@@ -386,7 +397,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Access shared folder
-  app.get('/api/shared/folder/:token', async (req, res) => {
+  app.get('/api/shared/folder/:token', sharedLimiter, async (req, res) => {
     try {
       const { token } = req.params;
       const folder = await storage.getSharedFolder(token);
@@ -413,7 +424,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Delete file
-  app.delete('/api/files/:id', isAuthenticated, async (req: any, res) => {
+  app.delete('/api/files/:id', isAuthenticated, fileOpLimiter, async (req: any, res) => {
     try {
       const fileId = parseInt(req.params.id);
       const userId = req.user.id;
@@ -972,7 +983,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Upload file to S3 bucket
-  app.post('/api/s3/upload', isAuthenticated, upload.single('file'), async (req: any, res) => {
+  app.post('/api/s3/upload', isAuthenticated, uploadLimiter, upload.single('file'), async (req: any, res) => {
     try {
       if (!req.file) {
         return res.status(400).json({ message: "No file uploaded" });
@@ -1052,7 +1063,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Delete S3 objects
-  app.delete('/api/s3/objects', isAuthenticated, async (req: any, res) => {
+  app.delete('/api/s3/objects', isAuthenticated, fileOpLimiter, async (req: any, res) => {
     try {
       const { bucket, keys } = req.body;
       const userId = req.user.id;

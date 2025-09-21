@@ -52,11 +52,51 @@ function normalizeEmail(email: string): string {
   return email.trim().toLowerCase();
 }
 
-// Rate limiting for auth endpoints
+// Rate limiting for different endpoint types
 const authLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
   max: 5, // Limit each IP to 5 requests per windowMs
   message: { message: 'Too many authentication attempts, please try again later.' },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
+const fileOpLimiter = rateLimit({
+  windowMs: 1 * 60 * 1000, // 1 minute
+  max: 30, // 30 file operations per minute
+  message: { message: 'Too many file operations, please slow down.' },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
+const uploadLimiter = rateLimit({
+  windowMs: 5 * 60 * 1000, // 5 minutes
+  max: 10, // 10 uploads per 5 minutes
+  message: { message: 'Upload limit exceeded, please wait before uploading more files.' },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
+const contactLimiter = rateLimit({
+  windowMs: 60 * 60 * 1000, // 1 hour
+  max: 3, // 3 contact form submissions per hour
+  message: { message: 'Too many contact form submissions, please try again later.' },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
+const sharedLimiter = rateLimit({
+  windowMs: 5 * 60 * 1000, // 5 minutes
+  max: 20, // 20 shared file accesses per 5 minutes
+  message: { message: 'Too many requests to shared content, please slow down.' },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
+const generalApiLimiter = rateLimit({
+  windowMs: 1 * 60 * 1000, // 1 minute
+  max: 100, // 100 general API requests per minute
+  message: { message: 'Too many requests, please slow down.' },
   standardHeaders: true,
   legacyHeaders: false,
 });
@@ -235,4 +275,14 @@ export const isAuthenticated: RequestHandler = (req, res, next) => {
     return next();
   }
   res.status(401).json({ message: 'Unauthorized' });
+};
+
+// Export rate limiters for use in routes
+export { 
+  authLimiter, 
+  fileOpLimiter, 
+  uploadLimiter, 
+  contactLimiter, 
+  sharedLimiter, 
+  generalApiLimiter 
 };

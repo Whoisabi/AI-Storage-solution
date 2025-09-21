@@ -3,70 +3,54 @@
 @tailwind utilities;
 
 :root {
-  --background: 210 40% 98%;
-  --foreground: 222 84% 4.9%;
-  --muted: 210 40% 96%;
-  --muted-foreground: 215 13.8% 34.1%;
+  --background: 0 0% 100%;
+  --foreground: 20 14.3% 4.1%;
+  --muted: 60 4.8% 95.9%;
+  --muted-foreground: 25 5.3% 44.7%;
   --popover: 0 0% 100%;
-  --popover-foreground: 222 84% 4.9%;
+  --popover-foreground: 20 14.3% 4.1%;
   --card: 0 0% 100%;
-  --card-foreground: 222 84% 4.9%;
-  --border: 214 32% 91%;
-  --input: 214 32% 91%;
-  --primary: 221 83% 53%;
-  --primary-foreground: 210 40% 98%;
-  --secondary: 210 40% 96%;
-  --secondary-foreground: 222 47% 11%;
-  --accent: 216 34% 91%;
-  --accent-foreground: 222 47% 11%;
-  --destructive: 0 84% 60%;
-  --destructive-foreground: 210 40% 98%;
-  --ring: 221 83% 53%;
-  --radius: 0.75rem;
-  --chart-1: 221 83% 53%;
-  --chart-2: 142 71% 45%;
-  --chart-3: 38 92% 50%;
-  --chart-4: 271 91% 65%;
-  --chart-5: 0 84% 60%;
-  
-  /* Modern gradients */
-  --gradient-primary: linear-gradient(135deg, hsl(221 83% 53%) 0%, hsl(271 91% 65%) 100%);
-  --gradient-secondary: linear-gradient(135deg, hsl(142 71% 45%) 0%, hsl(38 92% 50%) 100%);
-  --gradient-accent: linear-gradient(135deg, hsl(210 40% 98%) 0%, hsl(216 34% 91%) 100%);
-  
-  /* Shadows */
-  --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
-  --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
-  --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
-  --shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
+  --card-foreground: 20 14.3% 4.1%;
+  --border: 20 5.9% 90%;
+  --input: 20 5.9% 90%;
+  --primary: 220 90% 56%;
+  --primary-foreground: 220 100% 98%;
+  --secondary: 60 4.8% 95.9%;
+  --secondary-foreground: 24 9.8% 10%;
+  --accent: 60 4.8% 95.9%;
+  --accent-foreground: 24 9.8% 10%;
+  --destructive: 0 84.2% 60.2%;
+  --destructive-foreground: 60 9.1% 97.8%;
+  --ring: 20 14.3% 4.1%;
+  --radius: 0.5rem;
+  --chart-1: 220 90% 56%;
+  --chart-2: 160 60% 45%;
+  --chart-3: 30 80% 55%;
+  --chart-4: 280 65% 60%;
+  --chart-5: 340 75% 55%;
 }
 
 .dark {
-  --background: 222 84% 4.9%;
-  --foreground: 210 40% 98%;
-  --muted: 217 32% 17%;
-  --muted-foreground: 215 20% 65%;
-  --popover: 222 84% 4.9%;
-  --popover-foreground: 210 40% 98%;
-  --card: 222 84% 4.9%;
-  --card-foreground: 210 40% 98%;
-  --border: 217 32% 17%;
-  --input: 217 32% 17%;
-  --primary: 221 83% 53%;
-  --primary-foreground: 210 40% 98%;
-  --secondary: 217 32% 17%;
-  --secondary-foreground: 210 40% 98%;
-  --accent: 216 34% 17%;
-  --accent-foreground: 210 40% 98%;
-  --destructive: 0 62% 30%;
-  --destructive-foreground: 210 40% 98%;
-  --ring: 212 72% 59%;
-  --radius: 0.75rem;
-  
-  /* Modern gradients for dark mode */
-  --gradient-primary: linear-gradient(135deg, hsl(221 83% 53%) 0%, hsl(271 91% 65%) 100%);
-  --gradient-secondary: linear-gradient(135deg, hsl(142 71% 45%) 0%, hsl(38 92% 50%) 100%);
-  --gradient-accent: linear-gradient(135deg, hsl(222 84% 4.9%) 0%, hsl(217 32% 17%) 100%);
+  --background: 240 10% 3.9%;
+  --foreground: 0 0% 98%;
+  --muted: 240 3.7% 15.9%;
+  --muted-foreground: 240 5% 64.9%;
+  --popover: 240 10% 3.9%;
+  --popover-foreground: 0 0% 98%;
+  --card: 240 10% 3.9%;
+  --card-foreground: 0 0% 98%;
+  --border: 240 3.7% 15.9%;
+  --input: 240 3.7% 15.9%;
+  --primary: 220 90% 56%;
+  --primary-foreground: 220 100% 98%;
+  --secondary: 240 3.7% 15.9%;
+  --secondary-foreground: 0 0% 98%;
+  --accent: 240 3.7% 15.9%;
+  --accent-foreground: 0 0% 98%;
+  --destructive: 0 62.8% 30.6%;
+  --destructive-foreground: 0 0% 98%;
+  --ring: 240 4.9% 83.9%;
+  --radius: 0.5rem;
 }
 
 @layer base {
@@ -81,99 +65,19 @@
 }
 
 @layer components {
-  /* Modern file interactions */
   .file-hover {
-    @apply transition-all duration-300 ease-out transform-gpu;
+    @apply transition-all duration-200 ease-in-out;
   }
   
   .file-hover:hover {
-    @apply -translate-y-1 shadow-lg scale-[1.02];
-  }
-  
-  /* Enhanced upload zone */
-  .upload-zone {
-    @apply border-2 border-dashed border-muted-foreground/25 bg-gradient-to-br from-background to-muted/30;
-    @apply transition-all duration-300 ease-out;
+    @apply transform -translate-y-0.5 shadow-md;
   }
   
   .upload-zone-active {
-    @apply border-primary bg-gradient-to-br from-primary/5 to-primary/10;
-    box-shadow: 0 0 0 4px hsl(var(--primary) / 0.1);
+    @apply border-primary bg-blue-50;
   }
   
-  .upload-zone:hover {
-    @apply border-primary/60 bg-gradient-to-br from-primary/2 to-primary/5;
-  }
-  
-  /* Modern progress bars */
   .progress-bar {
-    @apply transition-all duration-500 ease-out;
-    background: var(--gradient-primary);
-  }
-  
-  /* Glass morphism effect */
-  .glass {
-    backdrop-filter: blur(16px) saturate(180%);
-    -webkit-backdrop-filter: blur(16px) saturate(180%);
-    background: hsl(var(--background) / 0.75);
-    border: 1px solid hsl(var(--border) / 0.18);
-  }
-  
-  /* Modern card effects */
-  .modern-card {
-    @apply bg-card border border-border/50 shadow-sm;
-    @apply transition-all duration-300 ease-out;
-    background: linear-gradient(145deg, hsl(var(--card)), hsl(var(--muted) / 0.5));
-  }
-  
-  .modern-card:hover {
-    @apply shadow-md -translate-y-0.5;
-    box-shadow: var(--shadow-lg);
-  }
-  
-  /* Gradient text */
-  .gradient-text {
-    background: var(--gradient-primary);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-  }
-  
-  /* Modern buttons */
-  .btn-gradient {
-    background: var(--gradient-primary);
-    @apply text-primary-foreground border-0;
-    @apply transition-all duration-300 ease-out;
-    @apply shadow-sm hover:shadow-md;
-  }
-  
-  .btn-gradient:hover {
-    transform: translateY(-1px);
-    box-shadow: var(--shadow-lg);
-  }
-  
-  /* Loading states */
-  .loading-pulse {
-    @apply animate-pulse bg-gradient-to-r from-muted via-muted-foreground/20 to-muted;
-  }
-  
-  /* Modern scrollbar */
-  .custom-scrollbar::-webkit-scrollbar {
-    width: 8px;
-    height: 8px;
-  }
-  
-  .custom-scrollbar::-webkit-scrollbar-track {
-    background: hsl(var(--muted));
-    border-radius: 4px;
-  }
-  
-  .custom-scrollbar::-webkit-scrollbar-thumb {
-    background: hsl(var(--muted-foreground) / 0.3);
-    border-radius: 4px;
-  }
-  
-  .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-    background: hsl(var(--muted-foreground) / 0.5);
+    @apply transition-all duration-300 ease-in-out;
   }
 }
