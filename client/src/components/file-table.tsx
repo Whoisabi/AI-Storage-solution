@@ -621,7 +621,6 @@ export default function FileTable({ searchQuery = '' }: FileTableProps) {
                     </div>
                     <div>
                       <p className="font-medium text-gray-900">{bucket.name}</p>
-                      <p className="text-sm text-gray-500">S3 Bucket</p>
                     </div>
                   </div>
                 </TableCell>
@@ -633,7 +632,7 @@ export default function FileTable({ searchQuery = '' }: FileTableProps) {
                 </TableCell>
                 <TableCell>
                   <Badge variant="outline" className="bg-blue-100 text-blue-800">
-                    S3 Bucket
+                    Disk
                   </Badge>
                 </TableCell>
                 <TableCell onClick={(e) => e.stopPropagation()}>

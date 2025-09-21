@@ -396,7 +396,6 @@ export default function EnhancedDashboard() {
                             </div>
                             <div className="flex-1 min-w-0">
                               <p className="font-medium text-blue-900 truncate">{bucket.name}</p>
-                              <p className="text-sm text-blue-600">S3 Bucket</p>
                             </div>
                           </div>
                           {/* Upload button on the right */}

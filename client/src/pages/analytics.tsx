@@ -249,7 +249,7 @@ export default function Analytics() {
                   <Database className="h-4 w-4 text-blue-600 dark:text-blue-400" />
                   <span className="text-blue-900 dark:text-blue-100 font-medium">{selectedDiskName}</span>
                   <Badge variant="outline" className="bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-200 border-blue-300 dark:border-blue-600">
-                    {currentLocation.type === 's3-bucket' ? 'S3 Bucket' : 'S3 Folder'}
+                    {currentLocation.type === 's3-bucket' ? 'Disk' : 'Folder'}
                   </Badge>
                 </div>
               ) : (
