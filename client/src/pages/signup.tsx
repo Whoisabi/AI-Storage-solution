@@ -60,15 +60,15 @@ export default function Signup() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-stone-200 to-amber-50 flex items-center justify-center p-4 relative overflow-hidden">
+    <div className="min-h-screen bg-gradient-to-br from-sky-400 to-blue-600 flex items-center justify-center p-2 relative overflow-hidden">
       {/* Animated Background Elements */}
-      <div className="absolute inset-0 bg-gradient-to-br from-amber-100/30 via-stone-100/30 to-orange-100/30"></div>
-      <div className="absolute -top-24 -left-24 w-96 h-96 bg-gradient-to-br from-amber-200/20 to-orange-200/20 rounded-full blur-3xl animate-pulse"></div>
-      <div className="absolute -bottom-24 -right-24 w-96 h-96 bg-gradient-to-br from-stone-200/20 to-amber-200/20 rounded-full blur-3xl animate-pulse" style={{animationDelay: '2s'}}></div>
+      <div className="absolute inset-0 bg-gradient-to-br from-blue-300/30 via-sky-200/30 to-cyan-200/30"></div>
+      <div className="absolute -top-24 -left-24 w-96 h-96 bg-gradient-to-br from-sky-300/20 to-blue-400/20 rounded-full blur-3xl animate-pulse"></div>
+      <div className="absolute -bottom-24 -right-24 w-96 h-96 bg-gradient-to-br from-blue-300/20 to-sky-400/20 rounded-full blur-3xl animate-pulse" style={{animationDelay: '2s'}}></div>
       
       <div className="w-full max-w-md relative z-10">
         {/* Enhanced Header */}
-        <div className="text-center mb-8">
+        <div className="text-center mb-4">
           <div className="flex items-center justify-center space-x-4 mb-6">
             <div className="relative">
               <div className="w-16 h-16 bg-gradient-to-br from-emerald-500 to-blue-600 rounded-2xl flex items-center justify-center shadow-2xl transform -rotate-3 hover:rotate-0 transition-transform duration-300">
@@ -78,7 +78,7 @@ export default function Signup() {
             </div>
             <div className="text-left">
               <h1 className="text-3xl font-bold text-black drop-shadow-sm">AI Storage</h1>
-              <p className="text-sm text-gray-700 font-medium">Cloud Solution</p>
+              <p className="text-sm text-white font-medium">Cloud Solution</p>
             </div>
           </div>
         </div>
@@ -87,14 +87,14 @@ export default function Signup() {
           {/* Card Glass Effect */}
           <div className="absolute inset-0 bg-gradient-to-br from-white/20 to-white/5 rounded-3xl"></div>
           <div className="absolute inset-0 bg-gradient-to-t from-black/10 to-transparent rounded-3xl"></div>
-          <CardHeader className="space-y-3 text-center relative z-10 pt-8">
+          <CardHeader className="space-y-2 text-center relative z-10 pt-6">
             <CardTitle className="text-3xl font-bold bg-gradient-to-r from-gray-800 to-gray-600 dark:from-white dark:to-gray-200 bg-clip-text text-transparent">Create your account</CardTitle>
             <CardDescription className="text-gray-600 dark:text-gray-300 text-lg leading-relaxed">
               Join AI Storage and start managing your files today
             </CardDescription>
           </CardHeader>
           <form onSubmit={handleSubmit(onSubmit)}>
-            <CardContent className="space-y-6 relative z-10 px-8">
+            <CardContent className="space-y-4 relative z-10 px-6">
               {error && (
                 <Alert variant="destructive">
                   <AlertDescription>{error}</AlertDescription>
@@ -102,7 +102,7 @@ export default function Signup() {
               )}
               
               <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-3">
+                <div className="space-y-2">
                   <Label htmlFor="firstName" className="text-sm font-semibold text-gray-700 dark:text-gray-300">First Name</Label>
                   <div className="relative group">
                     <div className="absolute inset-0 rounded-xl bg-gradient-to-r from-emerald-400/20 to-teal-400/20 opacity-0 group-focus-within:opacity-100 transition-opacity duration-300 blur-sm"></div>
@@ -111,7 +111,7 @@ export default function Signup() {
                       id="firstName"
                       type="text"
                       placeholder="John"
-                      className="relative h-14 pl-12 pr-4 bg-white/80 dark:bg-gray-800/80 border-gray-200 dark:border-gray-600 rounded-xl shadow-sm focus:shadow-lg focus:border-emerald-400 dark:focus:border-emerald-500 transition-all duration-200 backdrop-blur-sm text-lg"
+                      className="relative h-12 pl-12 pr-4 bg-white/80 dark:bg-gray-800/80 border-gray-200 dark:border-gray-600 rounded-xl shadow-sm focus:shadow-lg focus:border-emerald-400 dark:focus:border-emerald-500 transition-all duration-200 backdrop-blur-sm text-base"
                       {...register("firstName")}
                     />
                   </div>
@@ -120,7 +120,7 @@ export default function Signup() {
                   )}
                 </div>
 
-                <div className="space-y-3">
+                <div className="space-y-2">
                   <Label htmlFor="lastName" className="text-sm font-semibold text-gray-700 dark:text-gray-300">Last Name</Label>
                   <div className="relative group">
                     <div className="absolute inset-0 rounded-xl bg-gradient-to-r from-teal-400/20 to-blue-400/20 opacity-0 group-focus-within:opacity-100 transition-opacity duration-300 blur-sm"></div>
@@ -129,7 +129,7 @@ export default function Signup() {
                       id="lastName"
                       type="text"
                       placeholder="Doe"
-                      className="relative h-14 pl-12 pr-4 bg-white/80 dark:bg-gray-800/80 border-gray-200 dark:border-gray-600 rounded-xl shadow-sm focus:shadow-lg focus:border-teal-400 dark:focus:border-teal-500 transition-all duration-200 backdrop-blur-sm text-lg"
+                      className="relative h-12 pl-12 pr-4 bg-white/80 dark:bg-gray-800/80 border-gray-200 dark:border-gray-600 rounded-xl shadow-sm focus:shadow-lg focus:border-teal-400 dark:focus:border-teal-500 transition-all duration-200 backdrop-blur-sm text-base"
                       {...register("lastName")}
                     />
                   </div>
@@ -139,7 +139,7 @@ export default function Signup() {
                 </div>
               </div>
               
-              <div className="space-y-3">
+              <div className="space-y-2">
                 <Label htmlFor="email" className="text-sm font-semibold text-gray-700 dark:text-gray-300">Email Address</Label>
                 <div className="relative group">
                   <div className="absolute inset-0 rounded-xl bg-gradient-to-r from-blue-400/20 to-purple-400/20 opacity-0 group-focus-within:opacity-100 transition-opacity duration-300 blur-sm"></div>
@@ -148,7 +148,7 @@ export default function Signup() {
                     id="email"
                     type="email"
                     placeholder="name@example.com"
-                    className="relative h-14 pl-12 pr-4 bg-white/80 dark:bg-gray-800/80 border-gray-200 dark:border-gray-600 rounded-xl shadow-sm focus:shadow-lg focus:border-blue-400 dark:focus:border-blue-500 transition-all duration-200 backdrop-blur-sm text-lg"
+                    className="relative h-12 pl-12 pr-4 bg-white/80 dark:bg-gray-800/80 border-gray-200 dark:border-gray-600 rounded-xl shadow-sm focus:shadow-lg focus:border-blue-400 dark:focus:border-blue-500 transition-all duration-200 backdrop-blur-sm text-base"
                     {...register("email")}
                   />
                 </div>
@@ -157,7 +157,7 @@ export default function Signup() {
                 )}
               </div>
 
-              <div className="space-y-3">
+              <div className="space-y-2">
                 <Label htmlFor="password" className="text-sm font-semibold text-gray-700 dark:text-gray-300">Password</Label>
                 <div className="relative group">
                   <div className="absolute inset-0 rounded-xl bg-gradient-to-r from-purple-400/20 to-pink-400/20 opacity-0 group-focus-within:opacity-100 transition-opacity duration-300 blur-sm"></div>
@@ -166,22 +166,22 @@ export default function Signup() {
                     id="password"
                     type="password"
                     placeholder="Create a strong password"
-                    className="relative h-14 pl-12 pr-4 bg-white/80 dark:bg-gray-800/80 border-gray-200 dark:border-gray-600 rounded-xl shadow-sm focus:shadow-lg focus:border-purple-400 dark:focus:border-purple-500 transition-all duration-200 backdrop-blur-sm text-lg"
+                    className="relative h-12 pl-12 pr-4 bg-white/80 dark:bg-gray-800/80 border-gray-200 dark:border-gray-600 rounded-xl shadow-sm focus:shadow-lg focus:border-purple-400 dark:focus:border-purple-500 transition-all duration-200 backdrop-blur-sm text-base"
                     {...register("password")}
                   />
                 </div>
                 {errors.password && (
                   <p className="text-sm text-red-500 font-medium flex items-center mt-2">{errors.password.message}</p>
                 )}
-                <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
-                  Password must be at least 8 characters long
+                <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                  Min 8 characters
                 </p>
               </div>
             </CardContent>
-            <CardFooter className="flex flex-col space-y-6 relative z-10 px-8 pb-8">
+            <CardFooter className="flex flex-col space-y-4 relative z-10 px-6 pb-6">
               <Button
                 type="submit"
-                className="w-full h-14 rounded-xl bg-gradient-to-r from-emerald-600 via-blue-600 to-purple-600 hover:from-emerald-700 hover:via-blue-700 hover:to-purple-700 text-white font-semibold text-lg shadow-lg hover:shadow-2xl transform hover:scale-[1.02] active:scale-[0.98] transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none relative overflow-hidden"
+                className="w-full h-12 rounded-xl bg-gradient-to-r from-emerald-600 via-blue-600 to-purple-600 hover:from-emerald-700 hover:via-blue-700 hover:to-purple-700 text-white font-semibold text-base shadow-lg hover:shadow-2xl transform hover:scale-[1.02] active:scale-[0.98] transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none relative overflow-hidden"
                 disabled={isLoading}
               >
                 {/* 3D Button Effect */}
