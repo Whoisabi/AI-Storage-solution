@@ -64,8 +64,8 @@ export default function About() {
         </Card>
 
         {/* Key Features */}
-        <div className="space-y-8 p-8 rounded-3xl shadow-2xl" style={{ backgroundColor: 'darkturquoise' }}>
-          <h2 className="text-3xl font-bold text-center text-white drop-shadow-lg mb-8">Key Features</h2>
+        <div className="space-y-8 p-8 rounded-3xl shadow-2xl" style={{ backgroundColor: 'beige' }}>
+          <h2 className="text-3xl font-bold text-center text-gray-800 drop-shadow-lg mb-8">Key Features</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
             <Card className="bg-white/95 backdrop-blur-sm border-0 shadow-xl hover:shadow-2xl transition-all duration-300 hover:scale-105 rounded-2xl">
               <CardHeader className="text-center pb-4">
@@ -212,33 +212,25 @@ export default function About() {
 
         {/* Statistics */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-          <Card className="text-center">
-            <CardContent className="pt-6">
-              <div className="text-2xl font-bold text-primary">1TB</div>
-              <p className="text-sm text-muted-foreground">Free Storage Space</p>
-            </CardContent>
-          </Card>
+          <div className="text-center p-6 rounded-2xl shadow-lg" style={{ backgroundColor: 'cornflowerblue' }}>
+            <div className="text-3xl font-bold text-white mb-2">1TB</div>
+            <p className="text-white/90 font-medium">Free Storage Space</p>
+          </div>
           
-          <Card className="text-center">
-            <CardContent className="pt-6">
-              <div className="text-2xl font-bold text-primary">99.9%</div>
-              <p className="text-sm text-muted-foreground">Uptime Guarantee</p>
-            </CardContent>
-          </Card>
+          <div className="text-center p-6 rounded-2xl shadow-lg" style={{ backgroundColor: 'cornflowerblue' }}>
+            <div className="text-3xl font-bold text-white mb-2">99.9%</div>
+            <p className="text-white/90 font-medium">Uptime Guarantee</p>
+          </div>
           
-          <Card className="text-center">
-            <CardContent className="pt-6">
-              <div className="text-2xl font-bold text-primary">256-bit</div>
-              <p className="text-sm text-muted-foreground">AES Encryption</p>
-            </CardContent>
-          </Card>
+          <div className="text-center p-6 rounded-2xl shadow-lg" style={{ backgroundColor: 'cornflowerblue' }}>
+            <div className="text-3xl font-bold text-white mb-2">256-bit</div>
+            <p className="text-white/90 font-medium">AES Encryption</p>
+          </div>
           
-          <Card className="text-center">
-            <CardContent className="pt-6">
-              <div className="text-2xl font-bold text-primary">24/7</div>
-              <p className="text-sm text-muted-foreground">Customer Support</p>
-            </CardContent>
-          </Card>
+          <div className="text-center p-6 rounded-2xl shadow-lg" style={{ backgroundColor: 'cornflowerblue' }}>
+            <div className="text-3xl font-bold text-white mb-2">24/7</div>
+            <p className="text-white/90 font-medium">Customer Support</p>
+          </div>
         </div>
 
         {/* Team and Contact */}
