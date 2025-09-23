@@ -20,7 +20,7 @@ import {
 
 export default function About() {
   return (
-    <div className="min-h-screen" style={{ backgroundColor: 'cadetblue' }}>
+    <div className="min-h-screen bg-gradient-to-br from-cyan-300 via-cyan-400 to-cyan-500" style={{ backgroundColor: 'aqua' }}>
       <div className="container max-w-6xl mx-auto py-10">
         <div className="space-y-12">
           {/* Back button */}
@@ -64,81 +64,93 @@ export default function About() {
         </Card>
 
         {/* Key Features */}
-        <div className="space-y-6">
-          <h2 className="text-2xl font-bold text-center">Key Features</h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            <Card>
-              <CardHeader>
-                <Upload className="h-8 w-8 text-primary" />
-                <CardTitle className="text-lg">Easy File Upload</CardTitle>
+        <div className="space-y-8 p-8 rounded-3xl shadow-2xl" style={{ backgroundColor: 'darkturquoise' }}>
+          <h2 className="text-3xl font-bold text-center text-white drop-shadow-lg mb-8">Key Features</h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            <Card className="bg-white/95 backdrop-blur-sm border-0 shadow-xl hover:shadow-2xl transition-all duration-300 hover:scale-105 rounded-2xl">
+              <CardHeader className="text-center pb-4">
+                <div className="mx-auto w-16 h-16 bg-gradient-to-br from-blue-500 to-purple-600 rounded-2xl flex items-center justify-center mb-4 shadow-lg">
+                  <Upload className="h-8 w-8 text-white" />
+                </div>
+                <CardTitle className="text-xl font-bold text-gray-800">Easy File Upload</CardTitle>
               </CardHeader>
               <CardContent>
-                <p className="text-sm text-muted-foreground">
+                <p className="text-sm text-gray-600 leading-relaxed">
                   Drag-and-drop interface with support for multiple file types. 
                   Upload progress tracking and automatic organization.
                 </p>
               </CardContent>
             </Card>
 
-            <Card>
-              <CardHeader>
-                <Share2 className="h-8 w-8 text-primary" />
-                <CardTitle className="text-lg">Secure Sharing</CardTitle>
+            <Card className="bg-white/95 backdrop-blur-sm border-0 shadow-xl hover:shadow-2xl transition-all duration-300 hover:scale-105 rounded-2xl">
+              <CardHeader className="text-center pb-4">
+                <div className="mx-auto w-16 h-16 bg-gradient-to-br from-green-500 to-teal-600 rounded-2xl flex items-center justify-center mb-4 shadow-lg">
+                  <Share2 className="h-8 w-8 text-white" />
+                </div>
+                <CardTitle className="text-xl font-bold text-gray-800">Secure Sharing</CardTitle>
               </CardHeader>
               <CardContent>
-                <p className="text-sm text-muted-foreground">
+                <p className="text-sm text-gray-600 leading-relaxed">
                   Generate secure sharing links for files and folders. 
                   Control access permissions and track sharing activity.
                 </p>
               </CardContent>
             </Card>
 
-            <Card>
-              <CardHeader>
-                <BarChart3 className="h-8 w-8 text-primary" />
-                <CardTitle className="text-lg">Analytics Dashboard</CardTitle>
+            <Card className="bg-white/95 backdrop-blur-sm border-0 shadow-xl hover:shadow-2xl transition-all duration-300 hover:scale-105 rounded-2xl">
+              <CardHeader className="text-center pb-4">
+                <div className="mx-auto w-16 h-16 bg-gradient-to-br from-orange-500 to-red-600 rounded-2xl flex items-center justify-center mb-4 shadow-lg">
+                  <BarChart3 className="h-8 w-8 text-white" />
+                </div>
+                <CardTitle className="text-xl font-bold text-gray-800">Analytics Dashboard</CardTitle>
               </CardHeader>
               <CardContent>
-                <p className="text-sm text-muted-foreground">
+                <p className="text-sm text-gray-600 leading-relaxed">
                   Comprehensive insights into your storage usage, file types, 
                   and sharing patterns with interactive charts.
                 </p>
               </CardContent>
             </Card>
 
-            <Card>
-              <CardHeader>
-                <Shield className="h-8 w-8 text-primary" />
-                <CardTitle className="text-lg">Enterprise Security</CardTitle>
+            <Card className="bg-white/95 backdrop-blur-sm border-0 shadow-xl hover:shadow-2xl transition-all duration-300 hover:scale-105 rounded-2xl">
+              <CardHeader className="text-center pb-4">
+                <div className="mx-auto w-16 h-16 bg-gradient-to-br from-purple-500 to-indigo-600 rounded-2xl flex items-center justify-center mb-4 shadow-lg">
+                  <Shield className="h-8 w-8 text-white" />
+                </div>
+                <CardTitle className="text-xl font-bold text-gray-800">Enterprise Security</CardTitle>
               </CardHeader>
               <CardContent>
-                <p className="text-sm text-muted-foreground">
+                <p className="text-sm text-gray-600 leading-relaxed">
                   End-to-end encryption, secure authentication, and 
                   compliance with industry security standards.
                 </p>
               </CardContent>
             </Card>
 
-            <Card>
-              <CardHeader>
-                <Zap className="h-8 w-8 text-primary" />
-                <CardTitle className="text-lg">High Performance</CardTitle>
+            <Card className="bg-white/95 backdrop-blur-sm border-0 shadow-xl hover:shadow-2xl transition-all duration-300 hover:scale-105 rounded-2xl">
+              <CardHeader className="text-center pb-4">
+                <div className="mx-auto w-16 h-16 bg-gradient-to-br from-yellow-500 to-orange-600 rounded-2xl flex items-center justify-center mb-4 shadow-lg">
+                  <Zap className="h-8 w-8 text-white" />
+                </div>
+                <CardTitle className="text-xl font-bold text-gray-800">High Performance</CardTitle>
               </CardHeader>
               <CardContent>
-                <p className="text-sm text-muted-foreground">
+                <p className="text-sm text-gray-600 leading-relaxed">
                   Lightning-fast uploads and downloads powered by 
                   AWS S3 infrastructure and global CDN distribution.
                 </p>
               </CardContent>
             </Card>
 
-            <Card>
-              <CardHeader>
-                <Globe className="h-8 w-8 text-primary" />
-                <CardTitle className="text-lg">Global Access</CardTitle>
+            <Card className="bg-white/95 backdrop-blur-sm border-0 shadow-xl hover:shadow-2xl transition-all duration-300 hover:scale-105 rounded-2xl">
+              <CardHeader className="text-center pb-4">
+                <div className="mx-auto w-16 h-16 bg-gradient-to-br from-cyan-500 to-blue-600 rounded-2xl flex items-center justify-center mb-4 shadow-lg">
+                  <Globe className="h-8 w-8 text-white" />
+                </div>
+                <CardTitle className="text-xl font-bold text-gray-800">Global Access</CardTitle>
               </CardHeader>
               <CardContent>
-                <p className="text-sm text-muted-foreground">
+                <p className="text-sm text-gray-600 leading-relaxed">
                   Access your files from anywhere in the world with 
                   our responsive web interface and mobile-optimized design.
                 </p>
@@ -279,16 +291,27 @@ export default function About() {
         </div>
 
         {/* Footer */}
-        <Card className="bg-muted/50">
-          <CardContent className="pt-6 text-center">
-            <p className="text-muted-foreground">
+        <div className="p-8 rounded-3xl shadow-2xl" style={{ backgroundColor: 'navy' }}>
+          <div className="text-center space-y-4">
+            <div className="flex items-center justify-center space-x-2 mb-6">
+              <div className="w-12 h-12 bg-gradient-to-br from-cyan-400 to-blue-500 rounded-2xl flex items-center justify-center shadow-lg">
+                <Cloud className="h-6 w-6 text-white" />
+              </div>
+              <h3 className="text-2xl font-bold text-white">AI Storage Solution</h3>
+            </div>
+            <p className="text-cyan-200 text-lg font-medium">
               © 2024 AI Storage Solution. Built with ❤️ for the modern web.
             </p>
-            <p className="text-sm text-muted-foreground mt-2">
+            <p className="text-cyan-300 text-sm">
               Powered by React, Node.js, and AWS infrastructure.
             </p>
-          </CardContent>
-        </Card>
+            <div className="flex justify-center space-x-4 mt-6">
+              <div className="w-2 h-2 bg-cyan-400 rounded-full animate-pulse"></div>
+              <div className="w-2 h-2 bg-blue-400 rounded-full animate-pulse" style={{animationDelay: '0.2s'}}></div>
+              <div className="w-2 h-2 bg-teal-400 rounded-full animate-pulse" style={{animationDelay: '0.4s'}}></div>
+            </div>
+          </div>
+        </div>
         </div>
       </div>
     </div>
