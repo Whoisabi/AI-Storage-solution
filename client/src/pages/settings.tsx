@@ -26,10 +26,10 @@ export default function Settings() {
         </div>
 
         {/* Settings Grid */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Main Settings - Takes 2 columns on large screens */}
-          <div className="lg:col-span-2 space-y-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {/* Main Settings - Takes 1 column on large screens */}
+          <div className="space-y-6">
+            <div className="grid grid-cols-1 gap-6">
               {/* Change Email Card */}
               <Card className="group hover:shadow-lg transition-all duration-300 cursor-pointer bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 shadow-sm hover:-translate-y-1">
                 <Link href="/settings/change-email" className="block" data-testid="link-change-email">
