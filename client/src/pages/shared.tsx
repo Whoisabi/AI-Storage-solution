@@ -101,10 +101,9 @@ export default function Shared() {
   }
 
   return (
-    <div className="flex min-h-screen bg-gray-50">
+    <div className="flex min-h-screen">
       <Sidebar />
-      
-      <main className="flex-1 p-6">
+      <main className="flex-1 p-6" style={{ backgroundColor: 'aqua' }}>
         {/* Header */}
         <div className="flex items-center justify-between mb-8">
           <div>

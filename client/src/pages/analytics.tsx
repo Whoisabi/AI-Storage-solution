@@ -186,12 +186,12 @@ export default function Analytics() {
 
   if (isLoading) {
     return (
-      <div className="flex h-screen bg-gray-50 dark:bg-gray-900">
+      <div className="flex h-screen">
         <Sidebar />
-        <div className="flex-1 flex items-center justify-center">
+        <div className="flex-1 flex items-center justify-center" style={{ backgroundColor: 'aqua' }}>
           <div className="text-center">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
-            <p className="text-gray-600 dark:text-gray-400">Loading analytics...</p>
+            <p className="text-gray-600">Loading analytics...</p>
           </div>
         </div>
       </div>
@@ -200,11 +200,11 @@ export default function Analytics() {
 
   if (error || !analytics) {
     return (
-      <div className="flex h-screen bg-gray-50 dark:bg-gray-900">
+      <div className="flex h-screen">
         <Sidebar />
-        <div className="flex-1 flex items-center justify-center">
+        <div className="flex-1 flex items-center justify-center" style={{ backgroundColor: 'aqua' }}>
           <div className="text-center">
-            <p className="text-gray-500 dark:text-gray-400 mb-4">
+            <p className="text-gray-500 mb-4">
               {error ? `Failed to load analytics data: ${error.message}` : 'Failed to load analytics data'}
             </p>
             <Button 
@@ -226,9 +226,9 @@ export default function Analytics() {
   ];
 
   return (
-    <div className="flex h-screen bg-gray-50 dark:bg-gray-900">
+    <div className="flex h-screen">
       <Sidebar />
-      <main className="flex-1 overflow-auto">
+      <main className="flex-1 overflow-auto" style={{ backgroundColor: 'aqua' }}>
         <div className="p-8">
           {/* Header */}
           <div className="flex items-center justify-between mb-8">

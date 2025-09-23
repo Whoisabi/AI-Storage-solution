@@ -20,7 +20,7 @@ import {
 
 export default function About() {
   return (
-    <div className="min-h-screen bg-gradient-to-br from-orange-50/50 via-amber-50/30 to-yellow-50/50 dark:from-orange-950/20 dark:via-amber-950/10 dark:to-yellow-950/20">
+    <div className="min-h-screen" style={{ backgroundColor: 'cadetblue' }}>
       <div className="container max-w-6xl mx-auto py-10">
         <div className="space-y-12">
           {/* Back button */}
@@ -35,7 +35,7 @@ export default function About() {
 
           {/* Enhanced Hero Section */}
           <div className="text-center space-y-6">
-            <h1 className="text-5xl font-bold tracking-tight bg-gradient-to-r from-orange-600 via-amber-600 to-yellow-600 bg-clip-text text-transparent">
+            <h1 className="text-5xl font-bold tracking-tight" style={{ backgroundColor: 'darkturquoise', borderRadius: '1rem', color: 'navy', padding: '1.5rem 0' }}>
               About AI Storage Solution
             </h1>
             <p className="text-xl text-muted-foreground max-w-4xl mx-auto leading-relaxed">

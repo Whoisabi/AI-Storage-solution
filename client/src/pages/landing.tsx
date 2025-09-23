@@ -12,9 +12,21 @@ export default function Landing() {
   };
 
   return (
-  <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex flex-col">
+    <div
+      className="min-h-screen flex flex-col"
+      style={{
+        backgroundColor: 'cadetblue',
+        userSelect: 'none',
+        WebkitUserSelect: 'none',
+        MozUserSelect: 'none',
+        msUserSelect: 'none',
+      }}
+    >
       {/* Header */}
-  <header className="bg-white/90 border-b border-gray-200 sticky top-0 z-50">
+    <header
+      className="border-b border-gray-200 sticky top-0 z-50"
+      style={{ backgroundColor: 'darkturquoise' }}
+    >
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
             <div className="flex items-center space-x-3">
@@ -67,7 +79,7 @@ export default function Landing() {
       </section>
 
       {/* Features Section */}
-  <section className="py-20 bg-white/80">
+  <section className="py-20" style={{ backgroundColor: 'darkturquoise' }}>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-16">
             <h2 className="text-3xl font-bold text-gray-900 mb-4">
@@ -155,25 +167,31 @@ export default function Landing() {
       </section>
 
       {/* CTA Section */}
-      <section className="py-20 bg-primary animated-border">
+      <section className="py-20" style={{ backgroundColor: 'darkturquoise' }}>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center glass-card modern-shadow">
-          <h2 className="text-3xl font-bold text-white mb-4 drop-shadow-lg">
+          <h2 className="text-3xl font-bold mb-4 drop-shadow-lg" style={{ color: 'navy' }}>
             Ready to revolutionize your file storage?
           </h2>
-          <p className="text-xl text-blue-100 mb-8 max-w-2xl mx-auto">
+          <p className="text-xl mb-8 max-w-2xl mx-auto" style={{ color: 'red' }}>
             Join thousands of users who trust AI Storage for their most important files.
           </p>
-          <button 
-            onClick={handleSignup}
-            className="modern-btn text-lg px-8 py-3"
-          >
-            Start Your Free Trial
-          </button>
+          <div style={{ padding: '1.5rem 0' }}>
+            <button
+              onClick={handleSignup}
+              className="modern-btn text-lg"
+              style={{ padding: '1rem 2.5rem' }}
+            >
+              Start Your Free Trial
+            </button>
+          </div>
         </div>
       </section>
 
       {/* Footer */}
-  <footer className="bg-gray-900 text-white py-12 modern-shadow">
+    <footer
+      className="text-white py-12 modern-shadow"
+      style={{ backgroundColor: 'navy' }}
+    >
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <div className="flex items-center justify-center space-x-3 mb-4">
             <div className="w-8 h-8 bg-primary rounded flex items-center justify-center">

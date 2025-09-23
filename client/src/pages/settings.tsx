@@ -14,7 +14,7 @@ import {
 
 export default function Settings() {
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50/50 via-indigo-50/30 to-purple-50/50 dark:from-blue-950/20 dark:via-indigo-950/10 dark:to-purple-950/20">
+    <div className="min-h-screen" style={{ backgroundColor: 'cadetblue' }}>
       <div className="container max-w-4xl mx-auto py-10">
         <div className="space-y-8">
           {/* Back button */}
@@ -29,7 +29,7 @@ export default function Settings() {
 
           {/* Header section with enhanced styling */}
           <div className="text-center space-y-2">
-            <h1 className="text-4xl font-bold tracking-tight flex items-center justify-center gap-3 bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+            <h1 className="text-4xl font-bold tracking-tight flex items-center justify-center gap-3" style={{ backgroundColor: 'darkturquoise', borderRadius: '1rem', color: 'navy', padding: '1.5rem 0' }}>
               <SettingsIcon className="h-10 w-10 text-blue-600" />
               Settings
             </h1>

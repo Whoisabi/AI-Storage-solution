@@ -38,17 +38,16 @@ export default function MyFiles() {
   }
 
   return (
-    <div className="flex min-h-screen bg-gray-50">
+    <div className="flex min-h-screen">
       <Sidebar />
-      
-      <main className="flex-1 p-6">
+      <main className="flex-1 p-6" style={{ backgroundColor: 'aqua' }}>
         {/* Header */}
-        <div className="flex items-center justify-between mb-8">
+        <div className="flex items-center justify-between mb-8" style={{ borderRadius: '1rem', padding: '1.5rem' }}>
           <div>
             <h2 className="text-3xl font-bold text-gray-900">
               {currentLocation.name || 'My Files'}
             </h2>
-            <p className="text-gray-600 mt-1">Browse and manage your files</p>
+            <p className="text-gray-700 mt-1">Browse and manage your files</p>
           </div>
         </div>
 

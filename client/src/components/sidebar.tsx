@@ -26,8 +26,8 @@ export default function Sidebar() {
     return (first + last).toUpperCase() || "U";
   };
 
-  return (
-    <aside className="bg-white w-64 min-h-screen shadow-lg">
+    return (
+      <aside className="w-64 min-h-screen shadow-lg" style={{ backgroundColor: 'darkturquoise' }}>
       <div className="p-6">
         <div className="flex items-center space-x-3">
           <div className="w-10 h-10 bg-primary rounded-lg flex items-center justify-center">
