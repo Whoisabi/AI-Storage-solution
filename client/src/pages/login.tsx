@@ -86,7 +86,7 @@ export default function Login() {
           <div className="absolute inset-0 bg-gradient-to-br from-white/20 to-white/5 rounded-3xl"></div>
           <div className="absolute inset-0 bg-gradient-to-t from-black/10 to-transparent rounded-3xl"></div>
           <CardHeader className="space-y-3 text-center relative z-10 pt-8">
-            <CardTitle className="text-3xl font-bold bg-gradient-to-r from-gray-800 to-gray-600 dark:from-white dark:to-gray-200 bg-clip-text text-transparent">Welcome back</CardTitle>
+            <CardTitle className="text-3xl font-bold text-black">Welcome back</CardTitle>
             <CardDescription className="text-gray-600 dark:text-gray-300 text-lg leading-relaxed">
               Enter your credentials to access your account
             </CardDescription>
