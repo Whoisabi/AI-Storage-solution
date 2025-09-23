@@ -75,7 +75,7 @@ export default function Signup() {
           </div>
         </div>
 
-        <Card className="w-full">
+  <Card className="w-full">
           <CardHeader className="space-y-1">
             <CardTitle className="text-2xl text-center">Create your account</CardTitle>
             <CardDescription className="text-center">

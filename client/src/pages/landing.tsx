@@ -12,9 +12,9 @@ export default function Landing() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
+  <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex flex-col">
       {/* Header */}
-      <header className="bg-white/80 backdrop-blur-sm border-b border-gray-200 sticky top-0 z-50">
+  <header className="bg-white/90 border-b border-gray-200 sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
             <div className="flex items-center space-x-3">
@@ -39,39 +39,35 @@ export default function Landing() {
       </header>
 
       {/* Hero Section */}
-      <section className="py-20">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <div className="max-w-4xl mx-auto">
-            <h1 className="text-5xl font-bold text-gray-900 mb-6">
-              Intelligent Cloud Storage
-              <span className="text-primary block">Made Simple</span>
-            </h1>
-            <p className="text-xl text-gray-600 mb-8 max-w-2xl mx-auto">
-              Securely store, manage, and share your files with advanced AI-powered organization. 
-              Experience the future of cloud storage with seamless AWS S3 integration.
-            </p>
-            <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Button 
-                onClick={handleSignup}
-                size="lg" 
-                className="bg-primary hover:bg-blue-700 text-lg px-8 py-3"
-              >
-                Get Started Free
-              </Button>
-              <Button 
-                variant="outline" 
-                size="lg" 
-                className="text-lg px-8 py-3"
-              >
-                Learn More
-              </Button>
-            </div>
+      <section className="py-20 flex-1 flex items-center justify-center">
+        <div className="max-w-4xl w-full mx-auto text-center glass-card p-10 modern-shadow">
+          <h1 className="text-5xl font-bold text-gray-900 mb-6 drop-shadow-lg">
+            Intelligent Cloud Storage
+            <span className="text-primary block animate-pulse">Made Simple</span>
+          </h1>
+          <p className="text-xl text-gray-600 mb-8 max-w-2xl mx-auto">
+            Securely store, manage, and share your files with advanced AI-powered organization. 
+            Experience the future of cloud storage with seamless AWS S3 integration.
+          </p>
+          <div className="flex flex-col sm:flex-row gap-4 justify-center">
+            <button 
+              onClick={handleSignup}
+              className="modern-btn text-lg px-8 py-3"
+            >
+              Get Started Free
+            </button>
+            <button 
+              className="modern-btn modern-3d text-lg px-8 py-3"
+              style={{ background: 'linear-gradient(90deg, #fff 0%, #e0e7ff 100%)', color: '#6366f1', border: '2px solid #6366f1' }}
+            >
+              Learn More
+            </button>
           </div>
         </div>
       </section>
 
       {/* Features Section */}
-      <section className="py-20 bg-white">
+  <section className="py-20 bg-white/80">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-16">
             <h2 className="text-3xl font-bold text-gray-900 mb-4">
@@ -83,7 +79,7 @@ export default function Landing() {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            <Card className="text-center p-6 hover:shadow-lg transition-shadow">
+            <Card className="glass-card text-center p-6 hover:shadow-2xl transition-shadow modern-shadow">
               <CardContent className="pt-6">
                 <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4">
                   <Upload className="h-8 w-8 text-primary" />
@@ -95,7 +91,7 @@ export default function Landing() {
               </CardContent>
             </Card>
 
-            <Card className="text-center p-6 hover:shadow-lg transition-shadow">
+            <Card className="glass-card text-center p-6 hover:shadow-2xl transition-shadow modern-shadow">
               <CardContent className="pt-6">
                 <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
                   <Share className="h-8 w-8 text-green-600" />
@@ -107,7 +103,7 @@ export default function Landing() {
               </CardContent>
             </Card>
 
-            <Card className="text-center p-6 hover:shadow-lg transition-shadow">
+            <Card className="glass-card text-center p-6 hover:shadow-2xl transition-shadow modern-shadow">
               <CardContent className="pt-6">
                 <div className="w-16 h-16 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-4">
                   <Shield className="h-8 w-8 text-purple-600" />
@@ -119,7 +115,7 @@ export default function Landing() {
               </CardContent>
             </Card>
 
-            <Card className="text-center p-6 hover:shadow-lg transition-shadow">
+            <Card className="glass-card text-center p-6 hover:shadow-2xl transition-shadow modern-shadow">
               <CardContent className="pt-6">
                 <div className="w-16 h-16 bg-orange-100 rounded-full flex items-center justify-center mx-auto mb-4">
                   <Users className="h-8 w-8 text-orange-600" />
@@ -131,7 +127,7 @@ export default function Landing() {
               </CardContent>
             </Card>
 
-            <Card className="text-center p-6 hover:shadow-lg transition-shadow">
+            <Card className="glass-card text-center p-6 hover:shadow-2xl transition-shadow modern-shadow">
               <CardContent className="pt-6">
                 <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
                   <Zap className="h-8 w-8 text-blue-600" />
@@ -143,7 +139,7 @@ export default function Landing() {
               </CardContent>
             </Card>
 
-            <Card className="text-center p-6 hover:shadow-lg transition-shadow">
+            <Card className="glass-card text-center p-6 hover:shadow-2xl transition-shadow modern-shadow">
               <CardContent className="pt-6">
                 <div className="w-16 h-16 bg-indigo-100 rounded-full flex items-center justify-center mx-auto mb-4">
                   <Cloud className="h-8 w-8 text-indigo-600" />
@@ -159,27 +155,25 @@ export default function Landing() {
       </section>
 
       {/* CTA Section */}
-      <section className="py-20 bg-primary">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <h2 className="text-3xl font-bold text-white mb-4">
+      <section className="py-20 bg-primary animated-border">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center glass-card modern-shadow">
+          <h2 className="text-3xl font-bold text-white mb-4 drop-shadow-lg">
             Ready to revolutionize your file storage?
           </h2>
           <p className="text-xl text-blue-100 mb-8 max-w-2xl mx-auto">
             Join thousands of users who trust AI Storage for their most important files.
           </p>
-          <Button 
+          <button 
             onClick={handleSignup}
-            size="lg" 
-            variant="secondary"
-            className="text-lg px-8 py-3"
+            className="modern-btn text-lg px-8 py-3"
           >
             Start Your Free Trial
-          </Button>
+          </button>
         </div>
       </section>
 
       {/* Footer */}
-      <footer className="bg-gray-900 text-white py-12">
+  <footer className="bg-gray-900 text-white py-12 modern-shadow">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <div className="flex items-center justify-center space-x-3 mb-4">
             <div className="w-8 h-8 bg-primary rounded flex items-center justify-center">

@@ -73,7 +73,7 @@ export default function Login() {
           </div>
         </div>
 
-        <Card className="w-full">
+  <Card className="w-full">
           <CardHeader className="space-y-1">
             <CardTitle className="text-2xl text-center">Welcome back</CardTitle>
             <CardDescription className="text-center">

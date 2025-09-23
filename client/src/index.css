@@ -1,3 +1,76 @@
+/* Modern, professional, 3D-inspired enhancements */
+body {
+  background: linear-gradient(135deg, #e0e7ff 0%, #f0f4ff 100%);
+  min-height: 100vh;
+}
+
+.glass-card {
+  background: rgba(255, 255, 255, 0.7);
+  box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.18);
+  backdrop-filter: blur(8px) saturate(180%);
+  border-radius: 1.25rem;
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  transition: box-shadow 0.3s cubic-bezier(.4,2,.3,1), transform 0.2s;
+}
+.glass-card:hover {
+  box-shadow: 0 16px 40px 0 rgba(31, 38, 135, 0.22);
+  transform: translateY(-4px) scale(1.02);
+}
+
+.modern-btn {
+  background: linear-gradient(90deg, #6366f1 0%, #60a5fa 100%);
+  color: #fff;
+  border: none;
+  border-radius: 0.75rem;
+  box-shadow: 0 2px 8px rgba(99,102,241,0.15);
+  padding: 0.75rem 2rem;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  transition: background 0.2s, transform 0.15s, box-shadow 0.2s;
+  cursor: pointer;
+  perspective: 400px;
+}
+.modern-btn:hover {
+  background: linear-gradient(90deg, #60a5fa 0%, #6366f1 100%);
+  transform: translateY(-2px) scale(1.04) rotateX(6deg);
+  box-shadow: 0 6px 24px rgba(99,102,241,0.22);
+}
+
+.modern-input {
+  background: rgba(255,255,255,0.85);
+  border: 1.5px solid #e0e7ff;
+  border-radius: 0.75rem;
+  padding: 0.75rem 1.25rem;
+  font-size: 1rem;
+  box-shadow: 0 1px 4px rgba(99,102,241,0.07);
+  transition: border 0.2s, box-shadow 0.2s;
+}
+.modern-input:focus {
+  border: 1.5px solid #6366f1;
+  box-shadow: 0 2px 12px rgba(99,102,241,0.13);
+  outline: none;
+}
+
+.modern-shadow {
+  box-shadow: 0 4px 24px 0 rgba(99,102,241,0.13);
+}
+
+.modern-3d {
+  box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.18), 0 1.5px 0 #fff inset;
+  border-radius: 1.25rem;
+  background: linear-gradient(120deg, #f0f4ff 60%, #e0e7ff 100%);
+}
+
+/* Animated gradient border for 3D effect */
+.animated-border {
+  border: 3px solid;
+  border-image: linear-gradient(120deg, #6366f1, #60a5fa, #a5b4fc) 1;
+  animation: borderMove 2.5s linear infinite;
+}
+@keyframes borderMove {
+  0% { border-image-source: linear-gradient(120deg, #6366f1, #60a5fa, #a5b4fc); }
+  100% { border-image-source: linear-gradient(240deg, #6366f1, #60a5fa, #a5b4fc); }
+}
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
