@@ -465,7 +465,7 @@ export default function EnhancedDashboard() {
       
       {/* S3 Connection Modal */}
       <Dialog open={showConnectionModal} onOpenChange={setShowConnectionModal}>
-        <DialogContent className="sm:max-w-[425px]" data-testid="modal-s3-connection">
+        <DialogContent className="sm:max-w-[425px] bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 shadow-2xl z-50" data-testid="modal-s3-connection">
           <DialogHeader>
             <DialogTitle>Connect to S3</DialogTitle>
             <DialogDescription>

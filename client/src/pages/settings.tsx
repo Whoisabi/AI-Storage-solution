@@ -5,7 +5,6 @@ import Sidebar from "@/components/sidebar";
 import { 
   User, 
   HelpCircle, 
-  Info, 
   Settings as SettingsIcon,
   ChevronRight,
   Mail,
@@ -91,25 +90,6 @@ export default function Settings() {
                 </Link>
               </Card>
 
-              {/* About Us Card */}
-              <Card className="group hover:shadow-lg transition-all duration-300 cursor-pointer bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 shadow-sm hover:-translate-y-1">
-                <Link href="/settings/about" className="block" data-testid="link-about">
-                  <CardHeader className="space-y-3 pb-4">
-                    <CardTitle className="flex items-center justify-between">
-                      <div className="flex items-center gap-3">
-                        <div className="h-12 w-12 rounded-lg bg-orange-100 dark:bg-orange-900/20 flex items-center justify-center group-hover:scale-110 transition-transform">
-                          <Info className="h-6 w-6 text-orange-600 dark:text-orange-400" />
-                        </div>
-                        <span className="text-lg font-semibold text-gray-900 dark:text-white">About Us</span>
-                      </div>
-                      <ChevronRight className="h-5 w-5 text-gray-400 group-hover:text-orange-600 group-hover:translate-x-1 transition-all duration-300" />
-                    </CardTitle>
-                    <CardDescription className="text-gray-600 dark:text-gray-400">
-                      Learn more about AI Storage Solution and our mission
-                    </CardDescription>
-                  </CardHeader>
-                </Link>
-              </Card>
             </div>
           </div>
 
@@ -151,19 +131,6 @@ export default function Settings() {
                   </Link>
                 </Button>
                 
-                <Button 
-                  variant="outline" 
-                  className="w-full justify-start border-gray-200 dark:border-gray-700 hover:bg-orange-50 dark:hover:bg-orange-900/20 hover:border-orange-300 dark:hover:border-orange-600 transition-all duration-200 hover:shadow-md" 
-                  asChild 
-                  data-testid="button-about"
-                >
-                  <Link href="/settings/about" className="flex items-center gap-3">
-                    <div className="h-8 w-8 rounded-lg bg-orange-100 dark:bg-orange-900/20 flex items-center justify-center">
-                      <Info className="h-4 w-4 text-orange-600 dark:text-orange-400" />
-                    </div>
-                    <span>About Us</span>
-                  </Link>
-                </Button>
               </CardContent>
             </Card>
           </div>

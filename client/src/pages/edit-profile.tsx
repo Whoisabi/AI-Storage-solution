@@ -12,7 +12,8 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { z } from "zod";
 import { Separator } from "@/components/ui/separator";
-import { Eye, EyeOff } from "lucide-react";
+import { Eye, EyeOff, ArrowLeft } from "lucide-react";
+import { Link } from "wouter";
 
 const emailSchema = z.object({
   email: z.string().email("Please enter a valid email address"),
@@ -108,6 +109,22 @@ export default function EditProfile() {
   return (
     <div className="container max-w-2xl mx-auto py-10">
       <div className="space-y-6">
+        {/* Back button */}
+        <div className="flex items-center">
+          <Button 
+            variant="ghost" 
+            size="sm" 
+            className="text-gray-600 hover:text-gray-900 hover:bg-gray-100 dark:text-gray-400 dark:hover:text-gray-100 dark:hover:bg-gray-800 transition-colors" 
+            asChild 
+            data-testid="button-back-to-settings"
+          >
+            <Link href="/settings">
+              <ArrowLeft className="h-4 w-4 mr-2" />
+              Back to Settings
+            </Link>
+          </Button>
+        </div>
+        
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Edit Profile</h1>
           <p className="text-muted-foreground">

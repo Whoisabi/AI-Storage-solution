@@ -8,13 +8,18 @@ import {
   Share, 
   BarChart3, 
   Settings, 
-  LogOut 
+  LogOut,
+  Info 
 } from "lucide-react";
 import { Link, useLocation } from "wouter";
+import type { User } from "@shared/schema";
 
 export default function Sidebar() {
   const { user, logout } = useAuth();
   const [location] = useLocation();
+  
+  // Type assertion to ensure user has the correct type
+  const typedUser = user as User | undefined;
 
   const handleLogout = () => {
     logout();
@@ -45,20 +50,20 @@ export default function Sidebar() {
         <div className="px-6 mb-4">
           <div className="flex items-center space-x-3 p-3 rounded-lg bg-primary/10">
             <Avatar className="h-10 w-10">
-              <AvatarImage src={user?.profileImageUrl || ""} alt="User avatar" />
+              <AvatarImage src={typedUser?.profileImageUrl || ""} alt="User avatar" />
               <AvatarFallback className="bg-primary text-white">
-                {getInitials(user?.firstName, user?.lastName)}
+                {getInitials(typedUser?.firstName, typedUser?.lastName)}
               </AvatarFallback>
             </Avatar>
             <div className="flex-1 min-w-0">
               <p className="font-medium text-gray-900 truncate">
-                {user?.firstName && user?.lastName 
-                  ? `${user.firstName} ${user.lastName}`
-                  : user?.email || "User"
+                {typedUser?.firstName && typedUser?.lastName 
+                  ? `${typedUser.firstName} ${typedUser.lastName}`
+                  : typedUser?.email || "User"
                 }
               </p>
               <p className="text-sm text-gray-500 truncate">
-                {user?.email || "user@example.com"}
+                {typedUser?.email || "user@example.com"}
               </p>
             </div>
           </div>
@@ -104,6 +109,14 @@ export default function Sidebar() {
             }`}>
               <Settings className="h-5 w-5" />
               <span>Settings</span>
+            </Link>
+          </li>
+          <li>
+            <Link href="/settings/about" className={`flex items-center space-x-3 p-3 rounded-lg transition-colors ${
+              location === "/settings/about" ? "bg-primary text-white" : "text-gray-700 hover:bg-gray-100"
+            }`} data-testid="link-about-sidebar">
+              <Info className="h-5 w-5" />
+              <span>About Us</span>
             </Link>
           </li>
         </ul>
