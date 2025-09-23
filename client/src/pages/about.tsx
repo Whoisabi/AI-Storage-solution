@@ -35,7 +35,7 @@ export default function About() {
 
           {/* Enhanced Hero Section */}
           <div className="text-center space-y-6">
-            <h1 className="text-5xl font-bold tracking-tight" style={{ backgroundColor: 'darkturquoise', borderRadius: '1rem', color: 'navy', padding: '1.5rem 0' }}>
+            <h1 className="text-5xl font-bold tracking-tight" style={{ color: 'navy' }}>
               About AI Storage Solution
             </h1>
             <p className="text-xl text-muted-foreground max-w-4xl mx-auto leading-relaxed">
