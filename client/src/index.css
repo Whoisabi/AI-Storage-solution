@@ -75,6 +75,20 @@ body {
 @tailwind components;
 @tailwind utilities;
 
+/* Custom CSS variables for consistent colors */
+:root {
+  --aqua-color: #00ffff;
+  --darkturquoise-color: #00ced1;
+}
+
+.bg-aqua {
+  background-color: var(--aqua-color);
+}
+
+.bg-darkturquoise {
+  background-color: var(--darkturquoise-color);
+}
+
 :root {
   --background: 0 0% 100%;
   --foreground: 20 14.3% 4.1%;

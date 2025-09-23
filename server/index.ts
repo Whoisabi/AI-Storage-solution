@@ -9,7 +9,15 @@ const app = express();
 
 // Security headers
 app.use(helmet({
-  contentSecurityPolicy: {
+  contentSecurityPolicy: process.env.NODE_ENV === 'production' ? {
+    directives: {
+      defaultSrc: ["'self'"],
+      styleSrc: ["'self'"],
+      scriptSrc: ["'self'"],
+      imgSrc: ["'self'", "data:", "https:"],
+      connectSrc: ["'self'", "wss:", "ws:"],
+    },
+  } : {
     directives: {
       defaultSrc: ["'self'"],
       styleSrc: ["'self'", "'unsafe-inline'"],
@@ -28,7 +36,14 @@ app.use(helmet({
 // CORS protection
 app.use(cors({
   origin: process.env.NODE_ENV === 'production' 
-    ? ['https://your-domain.com'] // Replace with actual domain in production
+    ? (() => {
+        const allowedOrigins = process.env.ALLOWED_ORIGINS?.split(',');
+        if (!allowedOrigins) {
+          console.error('ALLOWED_ORIGINS environment variable is required in production');
+          process.exit(1);
+        }
+        return allowedOrigins;
+      })()
     : true,
   credentials: true,
 }));
@@ -71,12 +86,22 @@ app.use((req, res, next) => {
 
   app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
     const status = err.status || err.statusCode || 500;
-    const message = err.message || "Internal Server Error";
+    
+    // Don't expose internal error messages in production
+    const message = process.env.NODE_ENV === 'production' 
+      ? (status >= 500 ? "Internal Server Error" : err.message || "Internal Server Error")
+      : err.message || "Internal Server Error";
 
     if (!res.headersSent) {
       res.status(status).json({ message });
     }
-    console.error(err);
+    
+    // Only log full errors in development, sanitized in production
+    if (process.env.NODE_ENV === 'production') {
+      console.error(`${status} Error: ${err.message || 'Unknown error'}`);
+    } else {
+      console.error(err);
+    }
   });
 
   // importantly only setup vite in development and after

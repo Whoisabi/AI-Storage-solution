@@ -132,7 +132,7 @@ export default function Dashboard() {
   return (
     <div className="flex min-h-screen">
       <Sidebar />
-      <main className="flex-1 p-6">
+      <main className="flex-1 p-6 bg-aqua">
         {/* Header */}
         <div className="flex items-center justify-between mb-8">
           <div>
