@@ -465,63 +465,99 @@ export default function EnhancedDashboard() {
       
       {/* S3 Connection Modal */}
       <Dialog open={showConnectionModal} onOpenChange={setShowConnectionModal}>
-        <DialogContent className="sm:max-w-[425px] bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 shadow-2xl z-50" data-testid="modal-s3-connection">
-          <DialogHeader>
-            <DialogTitle>Connect to S3</DialogTitle>
-            <DialogDescription>
-              Enter your AWS credentials to connect to your S3 buckets and access your files.
-            </DialogDescription>
-          </DialogHeader>
+        <DialogContent className="sm:max-w-[500px] bg-gradient-to-br from-white to-gray-50 dark:from-gray-900 dark:to-gray-800 border-0 shadow-2xl backdrop-blur-sm rounded-2xl z-50 overflow-hidden" data-testid="modal-s3-connection">
+          {/* Decorative background elements */}
+          <div className="absolute inset-0 bg-gradient-to-br from-blue-50/50 to-cyan-50/30 dark:from-blue-950/20 dark:to-cyan-950/10"></div>
+          <div className="absolute -top-24 -right-24 w-48 h-48 bg-gradient-to-br from-blue-400/20 to-cyan-400/10 rounded-full blur-2xl"></div>
+          <div className="absolute -bottom-24 -left-24 w-48 h-48 bg-gradient-to-br from-cyan-400/20 to-blue-400/10 rounded-full blur-2xl"></div>
           
-          <div className="space-y-4 py-4">
-            <div className="space-y-2">
-              <Label htmlFor="accessKeyId">Access Key ID</Label>
-              <Input
-                id="accessKeyId"
-                type="text"
-                placeholder="Enter your AWS Access Key ID"
-                value={s3Credentials.accessKeyId}
-                onChange={(e) => setS3Credentials(prev => ({
-                  ...prev,
-                  accessKeyId: e.target.value
-                }))}
-                data-testid="input-access-key"
-              />
+          <div className="relative z-10">
+            <DialogHeader className="text-center pb-8">
+              {/* AWS S3 Icon */}
+              <div className="mx-auto w-16 h-16 mb-4 bg-gradient-to-br from-orange-400 to-orange-600 rounded-2xl shadow-lg flex items-center justify-center transform rotate-3 hover:rotate-0 transition-transform duration-300">
+                <Database className="h-8 w-8 text-white drop-shadow-sm" />
+              </div>
+              
+              <DialogTitle className="text-2xl font-bold bg-gradient-to-r from-gray-900 to-gray-700 dark:from-white dark:to-gray-200 bg-clip-text text-transparent">
+                Connect to S3
+              </DialogTitle>
+              <DialogDescription className="text-gray-600 dark:text-gray-400 mt-2 leading-relaxed">
+                Enter your AWS credentials to connect to your S3 buckets and access your files.
+              </DialogDescription>
+            </DialogHeader>
+            
+            <div className="space-y-6 py-4">
+              <div className="space-y-3">
+                <Label htmlFor="accessKeyId" className="text-sm font-semibold text-gray-700 dark:text-gray-300">
+                  Access Key ID
+                </Label>
+                <div className="relative group">
+                  <Input
+                    id="accessKeyId"
+                    type="text"
+                    placeholder="Enter your AWS Access Key ID"
+                    value={s3Credentials.accessKeyId}
+                    onChange={(e) => setS3Credentials(prev => ({
+                      ...prev,
+                      accessKeyId: e.target.value
+                    }))}
+                    className="h-12 px-4 bg-white/80 dark:bg-gray-800/80 border-gray-200 dark:border-gray-600 rounded-xl shadow-sm focus:shadow-lg focus:border-blue-400 dark:focus:border-blue-500 transition-all duration-200 backdrop-blur-sm"
+                    data-testid="input-access-key"
+                  />
+                  <div className="absolute inset-0 rounded-xl bg-gradient-to-r from-blue-400/0 to-cyan-400/0 group-focus-within:from-blue-400/5 group-focus-within:to-cyan-400/5 pointer-events-none transition-all duration-300"></div>
+                </div>
+              </div>
+              
+              <div className="space-y-3">
+                <Label htmlFor="secretAccessKey" className="text-sm font-semibold text-gray-700 dark:text-gray-300">
+                  Secret Access Key
+                </Label>
+                <div className="relative group">
+                  <Input
+                    id="secretAccessKey"
+                    type="password"
+                    placeholder="Enter your AWS Secret Access Key"
+                    value={s3Credentials.secretAccessKey}
+                    onChange={(e) => setS3Credentials(prev => ({
+                      ...prev,
+                      secretAccessKey: e.target.value
+                    }))}
+                    className="h-12 px-4 bg-white/80 dark:bg-gray-800/80 border-gray-200 dark:border-gray-600 rounded-xl shadow-sm focus:shadow-lg focus:border-blue-400 dark:focus:border-blue-500 transition-all duration-200 backdrop-blur-sm"
+                    data-testid="input-secret-key"
+                  />
+                  <div className="absolute inset-0 rounded-xl bg-gradient-to-r from-blue-400/0 to-cyan-400/0 group-focus-within:from-blue-400/5 group-focus-within:to-cyan-400/5 pointer-events-none transition-all duration-300"></div>
+                </div>
+              </div>
             </div>
             
-            <div className="space-y-2">
-              <Label htmlFor="secretAccessKey">Secret Access Key</Label>
-              <Input
-                id="secretAccessKey"
-                type="password"
-                placeholder="Enter your AWS Secret Access Key"
-                value={s3Credentials.secretAccessKey}
-                onChange={(e) => setS3Credentials(prev => ({
-                  ...prev,
-                  secretAccessKey: e.target.value
-                }))}
-                data-testid="input-secret-key"
-              />
-            </div>
-            
+            <DialogFooter className="pt-8 gap-3">
+              <Button 
+                variant="outline" 
+                onClick={() => setShowConnectionModal(false)}
+                className="h-12 px-6 rounded-xl border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700 transition-all duration-200 shadow-sm hover:shadow-md"
+                data-testid="button-cancel"
+              >
+                Cancel
+              </Button>
+              <Button 
+                onClick={handleS3Connect}
+                disabled={connectMutation.isPending}
+                className="h-12 px-8 rounded-xl bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 dark:from-blue-500 dark:to-blue-600 dark:hover:from-blue-600 dark:hover:to-blue-700 text-white font-semibold shadow-lg hover:shadow-xl transform hover:scale-[1.02] active:scale-[0.98] transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
+                data-testid="button-connect"
+              >
+                <div className="flex items-center space-x-2">
+                  {connectMutation.isPending && (
+                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                  )}
+                  <span>{connectMutation.isPending ? "Connecting..." : "Connect"}</span>
+                </div>
+                
+                {/* 3D button effect overlay */}
+                <div className="absolute inset-0 rounded-xl bg-gradient-to-t from-black/10 to-white/10 opacity-0 hover:opacity-100 transition-opacity duration-200 pointer-events-none"></div>
+                <div className="absolute inset-0 rounded-xl shadow-inner opacity-0 hover:opacity-20 transition-opacity duration-200 pointer-events-none"></div>
+              </Button>
+            </DialogFooter>
           </div>
-          
-          <DialogFooter>
-            <Button 
-              variant="outline" 
-              onClick={() => setShowConnectionModal(false)}
-              data-testid="button-cancel"
-            >
-              Cancel
-            </Button>
-            <Button 
-              onClick={handleS3Connect}
-              disabled={connectMutation.isPending}
-              data-testid="button-connect"
-            >
-              {connectMutation.isPending ? "Connecting..." : "Connect"}
-            </Button>
-          </DialogFooter>
         </DialogContent>
       </Dialog>
     </div>
