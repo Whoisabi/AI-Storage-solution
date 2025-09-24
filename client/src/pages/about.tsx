@@ -26,9 +26,8 @@ export default function About() {
           {/* Back button */}
           <div className="flex items-center">
             <Button variant="ghost" size="sm" className="hover:bg-white/80 dark:hover:bg-gray-800/80" asChild data-testid="button-back">
-              <Link href="/settings">
-                <ArrowLeft className="h-4 w-4 mr-2" />
-                Back to Settings
+              <Link href="/dashboard">
+                ← back
               </Link>
             </Button>
           </div>
