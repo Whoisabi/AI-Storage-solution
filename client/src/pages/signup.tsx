@@ -71,10 +71,10 @@ export default function Signup() {
         <div className="text-center mb-4">
           <div className="flex items-center justify-center space-x-4 mb-6">
             <div className="relative">
-              <div className="w-16 h-16 bg-gradient-to-br from-emerald-500 to-blue-600 rounded-2xl flex items-center justify-center shadow-2xl transform -rotate-3 hover:rotate-0 transition-transform duration-300">
+              <div className="w-16 h-16 bg-gradient-to-br from-purple-500 to-purple-700 rounded-2xl flex items-center justify-center shadow-2xl transform -rotate-3 hover:rotate-0 transition-transform duration-300">
                 <Cloud className="h-8 w-8 text-white drop-shadow-sm" />
               </div>
-              <div className="absolute inset-0 bg-gradient-to-br from-emerald-400 to-blue-500 rounded-2xl blur opacity-50 -z-10"></div>
+              <div className="absolute inset-0 bg-gradient-to-br from-purple-400 to-purple-600 rounded-2xl blur opacity-50 -z-10"></div>
             </div>
             <div className="text-left">
               <h1 className="text-3xl font-bold text-black drop-shadow-sm">AI Storage</h1>
@@ -179,9 +179,9 @@ export default function Signup() {
               </div>
             </CardContent>
             <CardFooter className="flex flex-col space-y-4 relative z-10 px-6 pb-6">
-              <Button
+             <Button
                 type="submit"
-                className="w-full h-12 rounded-xl bg-gradient-to-r from-emerald-600 via-blue-600 to-purple-600 hover:from-emerald-700 hover:via-blue-700 hover:to-purple-700 text-white font-semibold text-base shadow-lg hover:shadow-2xl transform hover:scale-[1.02] active:scale-[0.98] transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none relative overflow-hidden"
+                className="w-full h-12 rounded-xl bg-gradient-to-r from-purple-600 via-purple-600 to-purple-700 hover:from-purple-700 hover:via-purple-700 hover:to-purple-800 text-white font-semibold text-base shadow-lg hover:shadow-2xl transform hover:scale-[1.02] active:scale-[0.98] transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none relative overflow-hidden"
                 disabled={isLoading}
               >
                 {/* 3D Button Effect */}
@@ -191,7 +191,6 @@ export default function Signup() {
                   <span>{isLoading ? "Creating Account..." : "Create Account"}</span>
                 </div>
               </Button>
-              
               <div className="text-center text-sm">
                 <span className="text-gray-600 dark:text-gray-400">Already have an account? </span>
                 <Button

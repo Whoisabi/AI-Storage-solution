@@ -53,8 +53,7 @@ export default function Landing() {
       {/* Hero Section */}
       <section className="py-20 flex-1 flex items-center justify-center">
         <div className="max-w-4xl w-full mx-auto text-center glass-card p-10 modern-shadow">
-          <h1 className="text-5xl font-bold text-gray-900 mb-6 drop-shadow-lg">
-            Intelligent Cloud Storage
+          <h1 className="text-5xl font-bold text-gray-900 mb-6 drop-shadow-lg">Intelligent Cloud  Storage
             <span className="text-primary block animate-pulse">Made Simple</span>
           </h1>
           <p className="text-xl text-gray-600 mb-8 max-w-2xl mx-auto">

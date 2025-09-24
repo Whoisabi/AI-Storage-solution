@@ -39,15 +39,12 @@ function Router() {
   return (
     <Switch>
       {/* Public routes */}
+      <Route path="/" component={Landing} />
       <Route path="/login" component={Login} />
       <Route path="/signup" component={Signup} />
-      
-      {/* Protected and public routes based on auth status */}
-      {!isAuthenticated ? (
-        <Route path="/" component={Landing} />
-      ) : (
+      {/* Protected routes */}
+      {isAuthenticated && (
         <>
-          <Route path="/" component={Dashboard} />
           <Route path="/dashboard" component={Dashboard} />
           <Route path="/files" component={MyFiles} />
           <Route path="/shared" component={Shared} />
