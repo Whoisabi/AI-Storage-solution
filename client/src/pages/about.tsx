@@ -25,9 +25,16 @@ export default function About() {
         <div className="space-y-12">
           {/* Back button */}
           <div className="flex items-center">
-            <Button variant="ghost" size="sm" className="hover:bg-white/80 dark:hover:bg-gray-800/80" asChild data-testid="button-back">
-              <Link href="/dashboard">
-                ← back
+            <Button 
+              variant="outline" 
+              size="default"
+              className="rounded-full bg-white/80 backdrop-blur-sm hover:bg-white hover:shadow-lg transition-all duration-300 border-white/40 text-gray-700 hover:text-gray-900 min-w-[160px] h-11 font-medium" 
+              asChild 
+              data-testid="button-back"
+            >
+              <Link href="/dashboard" className="flex items-center gap-2">
+                <ArrowLeft className="h-4 w-4" />
+                Back to Dashboard
               </Link>
             </Button>
           </div>

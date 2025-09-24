@@ -50,7 +50,7 @@ export default function Sidebar() {
         <div className="px-6 mb-4">
           <div className="flex items-center space-x-3 p-3 rounded-lg bg-primary/10">
             <Avatar className="h-10 w-10">
-              <AvatarImage src={typedUser?.profileImageUrl || ""} alt="User avatar" />
+              <AvatarImage src={typedUser?.profileImageUrl ?? undefined} alt="User avatar" />
               <AvatarFallback className="bg-primary text-white">
                 {getInitials(typedUser?.firstName, typedUser?.lastName)}
               </AvatarFallback>
@@ -72,8 +72,8 @@ export default function Sidebar() {
         {/* Navigation Links */}
         <ul className="space-y-2 px-6">
           <li>
-            <Link href="/" className={`flex items-center space-x-3 p-3 rounded-lg transition-colors ${
-              location === "/" ? "bg-primary text-white" : "text-gray-700 hover:bg-gray-100"
+            <Link href="/dashboard" className={`flex items-center space-x-3 p-3 rounded-lg transition-colors ${
+              location === "/dashboard" ? "bg-primary text-white" : "text-gray-700 hover:bg-gray-100"
             }`}>
               <Home className="h-5 w-5" />
               <span>Dashboard</span>
